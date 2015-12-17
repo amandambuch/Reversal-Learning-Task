@@ -2,7 +2,7 @@
 % Modified from shopping learning task written by Madeleine Sharp, MD
 % Columbia University
 % Last Updated December 17, 2015
-function PDReversalTask
+function ReversalTask_MAIN
 % main file that runs sections of task and takes initial input
 dir='../Subjects/'; % enter subject directory here
 

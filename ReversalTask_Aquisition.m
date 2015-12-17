@@ -2,7 +2,7 @@
 % Modified from shopping learning task written by Madeleine Sharp, MD
 % Columbia University
 % Last Updated December 17, 2015
-function aq=PD_Aquisition(rewCat, day, folder_name)
+function aq=ReversalTask_Aquisition(rewCat, day, folder_name)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
 % aq is the structure that contains all the matrices to be saved
