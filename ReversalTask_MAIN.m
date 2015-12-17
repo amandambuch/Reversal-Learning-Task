@@ -24,6 +24,7 @@ end
 p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
 p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
 p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
+p.scanned('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
 
 if p.versionRewardCat~= 1 && p.versionRewardCat~=2
     Screen('CloseAll');
@@ -41,9 +42,33 @@ if practice==1
 end
 save(sprintf('%s/practicePR',folder_name),'pr')
 
+[trigger,kb,buttonBox]=getExternals;
+if scanned==0;
+    trigger=kb;
+    buttonBox=kb;
+elseif scanned==1
+    error=0;
+    if trigger==0
+        err=MException('AcctError:Incomplete', 'trigger box not detected');
+        error=1;
+    end
+    if kb==0
+        err=MException('AcctError:Incomplete', 'internal key board not detected');
+        error=1;
+    end
+    if buttonBox==0
+        err=MException('AcctError:Incomplete', 'Button Box not detected');
+        error=1;
+    end
+    
+    if error
+        throw(err)
+    end
+end
+
 if acquisition ==1
-     PD_Instructions(versionRewardCat);
-     PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name);
+     PD_Instructions(versionRewardCat,scanned);
+     PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name,scanned);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %         'memory' 'stimSet' 'listNum' 'versionRewardCat'
      aq = PD_Practice(p.versionRewardCat,p.day);

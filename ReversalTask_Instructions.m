@@ -6,7 +6,12 @@ function ReversalTask_Instructions
 
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
-okResp=KbName('space');
+
+if scanned==1
+    okResp=KbName('space');
+else
+    okResp=KbName('1!');
+end
 
 try
     [window, windrect] = Screen('OpenWindow', 0); % get screen
