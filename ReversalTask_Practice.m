@@ -1,6 +1,6 @@
 % Behavioral Reversal Learning Task written by Amanda Buch
 % Modified from shopping learning task written by Madeleine Sharp, MD
-% Columbia University
+% in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
 function pr = ReversalTask_Practice(rewCat,day)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes

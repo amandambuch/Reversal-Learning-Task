@@ -1,6 +1,6 @@
 % Behavioral Reversal Learning Task written by Amanda Buch
 % Modified from shopping learning task written by Madeleine Sharp, MD
-% Columbia University
+% in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
 function ReversalTask_Instructions
 
