@@ -7,7 +7,7 @@ function ReversalTask_Instructions
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
 
-if scanned==1
+if scanned==0
     okResp=KbName('space');
 else
     okResp=KbName('1!');
