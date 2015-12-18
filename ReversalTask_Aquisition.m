@@ -14,9 +14,16 @@ Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running
     % Key Responses    
     KbName('UnifyKeyNames');
     escapeKey=KbName('q');
-    leftResp=KbName('j');
-    rightResp=KbName('k');
-    okResp=KbName('space');
+    if scanned==0
+        leftResp=KbName('j');
+        rightResp=KbName('k');
+        okResp=KbName('space');
+    else
+        leftResp=KbName('2@');
+        rightResp=KbName('3#');
+        okResp=KbName('1!');
+        ttl=KbName('t');
+    end
    
 %% Start psychtoolbox, open the screen, and set initial infromation
 
