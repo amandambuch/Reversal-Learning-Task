@@ -55,7 +55,7 @@ try
     end
     
     %%% Practice -- calls other script
-    pr=PD_Practice(rewCat);
+    pr=ReversalTask_Practice(rewCat);
     
     %%% Post-practice instruction
     

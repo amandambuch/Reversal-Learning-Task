@@ -35,10 +35,10 @@ end
 save (sprintf('%s/inputP',folder_name), 'p')
 
 if practice==1
-    PD_Practice_Instructions(p.versionRewardCat);
+    pr=ReversalTask_PracticeInstructions(p.versionRewardCat);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %     'memory' 'stimSet' 'listNum' 'versionRewardCat'
-    pr = PD_Practice(p.versionRewardCat,p.day);
+    %pr = ReversalTask_Practice(p.versionRewardCat,p.day);
 end
 save(sprintf('%s/practicePR',folder_name),'pr')
 
@@ -67,11 +67,11 @@ elseif scanned==1
 end
 
 if acquisition ==1
-     PD_Instructions(versionRewardCat,scanned);
-     PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name,scanned);
+     ReversalTask_Instructions(versionRewardCat,scanned);
+     %PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name,scanned);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %         'memory' 'stimSet' 'listNum' 'versionRewardCat'
-     aq = PD_Practice(p.versionRewardCat,p.day);
+     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,folder_name);
 
 % end
 save(sprintf('%s/aquisitionAQfin',folder_name),'aq')
