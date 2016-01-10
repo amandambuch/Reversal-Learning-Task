@@ -7,7 +7,7 @@ function ReversalTask_Instructions
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
 
-if scanned==1
+if scanned==0
     okResp=KbName('space');
 else
     okResp=KbName('1!');
@@ -42,7 +42,7 @@ try
 
     %%% Display instructions
     
-    for i=1:numel(instrDir) % these are the instructions that appear before the practice
+    for i=1:numel(imgTexCell) % these are the instructions that appear before the practice
         Screen('DrawTexture', window, imgTexCell{i});
         [VBLTimestamp startChoice]=Screen('Flip', window);
         [keyIsDown,TimeStamp,keyCode] = KbCheck;

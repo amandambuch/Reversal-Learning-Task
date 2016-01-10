@@ -46,14 +46,14 @@ Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running
     objects=dir([objectsDir, '*.jpg']);
 
     if day==1 % list 1
-        scenes=scenes(1:(numel(scenes)/2));
-        objects=objects(1:(numel(objects)/2));
+        scenes=scenes(1:round(numel(scenes)/2));
+        objects=objects(1:round(numel(objects)/2));
     else
-        scenes=scenes((numel(scenes)/2):numel(scenes));
-        objects=objects(1:(numel(objects)/2));
+        scenes=scenes((round(numel(scenes)/2)+1):numel(scenes));
+        objects=objects((round(numel(objects)/2)+1):numel(objects));
     end
     
-    nTrials=uint16(numel(scenes)*2); % length(trials) numel(scenes)
+    nTrials=uint16(numel(scenes)+numel(objects)); % length(trials) numel(scenes)
 
     img=cell(numel(scenes),2);
     for i=1:numel(scenes); % now size of objects and scenes arrays are both 1/2 the size
