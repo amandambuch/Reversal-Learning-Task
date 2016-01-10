@@ -25,7 +25,7 @@ end
 p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
 p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
 p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
-p.scanned('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
+p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
 
 if p.versionRewardCat~= 1 && p.versionRewardCat~=2
     Screen('CloseAll');
@@ -35,8 +35,8 @@ if p.versionRewardCat~= 1 && p.versionRewardCat~=2
 end
 save (sprintf('%s/inputP',folder_name), 'p')
 
-if practice==1
-    pr=ReversalTask_PracticeInstructions(p.versionRewardCat);
+if p.practice==1
+    pr=ReversalTask_PracticeInstructions(p.versionRewardCat, p.day);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %     'memory' 'stimSet' 'listNum' 'versionRewardCat'
     %pr = ReversalTask_Practice(p.versionRewardCat,p.day);
@@ -44,10 +44,10 @@ end
 save(sprintf('%s/practicePR',folder_name),'pr')
 
 [trigger,kb,buttonBox]=getExternals;
-if scanned==0;
+if p.scanned==0;
     trigger=kb;
     buttonBox=kb;
-elseif scanned==1
+elseif p.scanned==1
     error=0;
     if trigger==0
         err=MException('AcctError:Incomplete', 'trigger box not detected');
@@ -67,7 +67,7 @@ elseif scanned==1
     end
 end
 
-if acquisition ==1
+if p.acquisition ==1
      ReversalTask_Instructions(versionRewardCat,scanned);
      %PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name,scanned);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...

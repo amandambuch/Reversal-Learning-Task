@@ -2,8 +2,29 @@
 % Modified from shopping learning task written by Madeleine Sharp, MD
 % in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
-function pr = ReversalTask_Practice(rewCat,day)
+
+% function pr = ReversalTask_Practice(rewCat,day)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
+
+%% just for troubleshooting purposes, not running as function so I can see the variables in workspace
+
+direc='../Subjects/'; % enter subject directory here
+
+KbName('UnifyKeyNames');
+rand('state',sum(100*clock));
+okResp=KbName('space'); 
+
+p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
+p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
+
+p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
+p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
+p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
+    rewCat=p.versionRewardCat;
+p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
+
+%%
+
 %%% PRACTICE %%%
 
 %% Setting up the environment
@@ -45,7 +66,7 @@ Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running
     objectsDir='StimuliPD/Practice/objects/';
     objects=dir([objectsDir, '*.jpg']);
 
-    if day==1 % list 1
+    if p.day==1 % list 1
         scenes=scenes(1:round(numel(scenes)/2));
         objects=objects(1:round(numel(objects)/2));
     else
@@ -60,7 +81,11 @@ Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running
         [o,~,alpha]=imread([scenesDir scenes(i).name], 'jpg');
         StimCell=cat(3,o,alpha);
         img{i,1}=Screen('MakeTexture',window, StimCell);
+    end
+    %cut this loop in half because there are different number of scenes and obj
+    % though need to have same numbers otherwise the img{} is uneven
         
+    for i=1:numel(objects);
         [o,~,alpha]=imread([objectsDir objects(i).name], 'jpg');
         StimRect=RectOfMatrix(o);
         StimCell=cat(3,o,alpha);
@@ -305,4 +330,4 @@ disp('line 215')
  %catch
  Screen('CloseAll');
   %rethrow(MException);
-end
+%end

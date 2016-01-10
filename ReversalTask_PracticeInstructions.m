@@ -2,7 +2,7 @@
 % Modified from shopping learning task written by Madeleine Sharp, MD
 % in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
-function pr=ReversalTask_PracticeInstructions(rewCat)
+function pr=ReversalTask_PracticeInstructions(rewCat, day)
 
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
@@ -55,7 +55,7 @@ try
     end
     
     %%% Practice -- calls other script
-    pr=ReversalTask_Practice(rewCat);
+    pr=ReversalTask_Practice(rewCat, day);
     
     %%% Post-practice instruction
     
