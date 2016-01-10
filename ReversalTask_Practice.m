@@ -64,7 +64,7 @@ p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
     scenesDir='StimuliPD/Practice/scenes/';
     scenes=dir([scenesDir, '*.jpg']);
     objectsDir='StimuliPD/Practice/objects/';
-    objects=dir([objectsDir, '*.jpg']);
+    objects=dir([objectsDir, '*.jpg']); 
 
     if p.day==1 % list 1
         scenes=scenes(1:round(numel(scenes)/2));
@@ -74,7 +74,7 @@ p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
         objects=objects((round(numel(objects)/2)+1):numel(objects));
     end
     
-    nTrials=uint16(numel(scenes)+numel(objects)); % length(trials) numel(scenes)
+    nTrials=uint16(numel(scenes)) %+numel(objects)); % length(trials) numel(scenes)
 
     img=cell(numel(scenes),2);
     for i=1:numel(scenes); % now size of objects and scenes arrays are both 1/2 the size
@@ -115,8 +115,9 @@ p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
     pr.rewProb(1:x)=1;
     pr.rewProb=pr.rewProb(randperm(numel(pr.rewProb)));
 disp(['# trials is ' num2str(nTrials) 'on line 88']);
-    trialsS=randperm(nTrials/2); %creates random order for scenes
-    trialsO=randperm(nTrials/2); %a separate random list for objects
+%MS: why nTrials/2 --I chaged this for now
+    trialsS=randperm(nTrials); %(nTrials/2); %creates random order for scenes
+    trialsO=randperm(nTrials); %(nTrials/2); %a separate random list for objects
     pr.SorR=ones(1,nTrials);
     x=nTrials/2;
     pr.SorR(1:x)=2;
@@ -125,7 +126,7 @@ disp(['# trials is ' num2str(nTrials) 'on line 88']);
     pr.chosenSide=NaN(1,numel(nTrials));
     pr.chosenStim=pr.chosenSide;
     pr.rt=pr.chosenSide;
-    pr.reversalAt=3;
+    pr.reversalAt=8;
 %     trials1=NaN(1,nTrials);
 %     trials2=trials1;
 %%  Write Instructions and check for escape key
@@ -148,7 +149,7 @@ escape=0;
 
 %% Start of Trial Aquisition %%
     reversal = 0;
-    for t=1:nTrials/2
+    for t=1:nTrials %MS: why was this nTrials/2??
         if t>pr.reversalAt && reversal==0 % when trial number is greater than reversal point and reversal has not occured yet
             reversal=reversal+1;
             rewCat=abs(3-rewCat);
@@ -253,11 +254,19 @@ escape=0;
 disp(num2str(resp))
 disp(num2str(pr.rewProb(t)))
 disp('line 215')
-        %% Show Feedback Based on Choice
+
+
+%% Show Feedback Based on Choice
         % when chosen category = rewarded category, rewarded most of the
         % time (rewProb = 1)
         % when chosen category ~= rewarded category, rewarded some of the
         % time (rewProb = 0)
+        
+%%        
+%%MS: need to think whether it makes sense to have a single list of
+%%semi-prob outcome assignments
+%%
+
         if isnan(resp) % Does not respond in time?
             [nx, ny,TB]=DrawFormattedText(window,' Too Slow! ', 'center','center', [0 0 0]);
             Screen('FillRect', window, white, [TB(1)+2 TB(2)+3 TB(3)+2 TB(4)+3]);
@@ -328,6 +337,8 @@ disp('line 215')
     escape=1;          % Exit after last trial
   end %end the while loop
  %catch
+ 
+ disp('end')
  Screen('CloseAll');
   %rethrow(MException);
 %end
