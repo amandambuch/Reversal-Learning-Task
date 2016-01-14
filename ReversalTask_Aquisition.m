@@ -14,37 +14,39 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-%function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, p.SubjectNumber)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
-%% just for troubleshooting purposes, not running as function so I can see the variables in workspace
-
-direc='../Subjects/'; % enter subject directory here
-
-KbName('UnifyKeyNames');
-rand('state',sum(100*clock));
-okResp=KbName('space'); 
-
-p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
-p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
-    day=p.day; %MS since not running out of wrapper
-
-folder_name=(sprintf('Subjects/Subject%d/day%d',p.SubjectNumber,p.day));
-if ~exist(folder_name, 'dir')
-    mkdir (sprintf('%s',folder_name))
-else
-    disp(['Error directory exists for subject ' num2str(p.SubjectNumber) ' for day ' num2str(p.day)])
-    return
-end
-
-p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
-p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
-p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
-    rewCat=p.versionRewardCat;
-p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
-
-
-save (sprintf('%s/inputP',folder_name), 'p')
+% %% just for troubleshooting purposes, not running as function so I can see the variables in workspace
+% 
+% direc='../Subjects/'; % enter subject directory here
+% 
+% KbName('UnifyKeyNames');
+% rand('state',sum(100*clock));
+% okResp=KbName('space'); 
+% 
+% p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
+%     SubjectNumber=p.SubjectNumber;
+% p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
+%     day=p.day; %MS since not running out of wrapper
+% 
+% folder_name=(sprintf('Subjects/Subject%d/day%d',p.SubjectNumber,p.day));
+% if ~exist(folder_name, 'dir')
+%     mkdir (sprintf('%s',folder_name))
+% else
+%     disp(['Error directory exists for subject ' num2str(p.SubjectNumber) ' for day ' num2str(p.day)])
+%     return
+% end
+% 
+% p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
+% p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
+% p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
+%     rewCat=p.versionRewardCat;
+% p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
+%     scanned=p.scanned;
+% 
+% 
+% save (sprintf('%s/inputP',folder_name), 'p')
 %%
 
 % aq is the structure that contains all the matrices to be saved
@@ -96,10 +98,10 @@ try
     
     %% Locate and Choose the Stimuli
     rnd=NaN;
-    scenesDir='StimuliPD/Practice/scenes/';
+    scenesDir='StimuliPD/Aquisition/300Scenes/';
     %scenesDir='StimuliPD/Aquisition/800Scenes/'; %directory of 1st category
     scenes=dir([scenesDir, '*.jpg']);
-    objectsDir='StimuliPD/Practice/objects/';
+    objectsDir='StimuliPD/Aquisition/300Objects/';
     %objectsDir='StimuliPD/Aquisition/800Objects/';  %directory of 2nd category
     objects=dir([objectsDir, '*.jpg']);
    
@@ -174,10 +176,10 @@ disp(['# trials is ' num2str(nTrials) 'on line 107']);
     aq.chosenSide=NaN(1,nTrials);
     aq.chosenStim=aq.chosenSide;
     aq.rt=aq.chosenSide;
-    %aq.reversalAt=randi([90 110],1,1); % sets reversal at random value between 90 and 110
-    aq.reversalAt=10;
+    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
+    %aq.reversalAt=10;
     b=0;
-    aq.blockLength=6; %MS: 40;
+    aq.blockLength=30; %MS: 40;
     aq.breaks=NaN(1,nTrials/aq.blockLength-1);
     aq.breaksLength=aq.breaks;
     aq.reward=aq.breaks;
@@ -331,7 +333,7 @@ escape=0;
 %                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 aq.reward(t)=1;
@@ -378,7 +380,7 @@ escape=0;
 %                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 aq.reward(t)=1;
@@ -391,7 +393,7 @@ escape=0;
         
     %% MS: create an output matrix
     
-        outputmat(t,1)=p.SubjectNumber;
+        outputmat(t,1)=SubjectNumber;
         outputmat(t,2)=t;
         outputmat(t,3)=day;
         outputmat(t,4)=trials1;
@@ -417,7 +419,7 @@ escape=0;
                 save(sprintf('%s/AQmat',folder_name),'outputmat');
             end
             % below is where we could move the image loading to
-            if mod(t,6)==0 && t<nTrials %MS changed block length to 6 for testing
+            if mod(t,aq.blockLength)==0 && t<nTrials %MS changed block length to 6 for testing
                 b=b+1;
                 aq.breaks(b)=GetSecs;
                 Screen('TextSize',window, [30]);
@@ -460,4 +462,4 @@ catch
     Priority(0);
     psychrethrow(psychlasterror);
  end %end the while loop
-%end    
+end    
