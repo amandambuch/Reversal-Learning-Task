@@ -3,27 +3,33 @@
 % in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
 
-% function pr = ReversalTask_Practice(rewCat,day)
+%MS changes made/questions (and see below): 
+%1) nTrials/2 --> nTrials; 2)
+%2)multiple reversals?
+%3) added a variable coding for optimal choice (pr.optimal)....may be
+%redundant...
+
+function pr = ReversalTask_Practice(rewCat,day,noscreenclose)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
-%% just for troubleshooting purposes, not running as function so I can see the variables in workspace
-
-direc='../Subjects/'; % enter subject directory here
-
-KbName('UnifyKeyNames');
-rand('state',sum(100*clock));
-okResp=KbName('space'); 
-
-p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
-p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
-
-p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
-p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
-p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
-    rewCat=p.versionRewardCat;
-p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
-
-%%
+% %% just for troubleshooting purposes, not running as function so I can see the variables in workspace
+% 
+% direc='../Subjects/'; % enter subject directory here
+% 
+% KbName('UnifyKeyNames');
+% rand('state',sum(100*clock));
+% okResp=KbName('space'); 
+% 
+% p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
+% p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
+% 
+% p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
+% p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
+% p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
+%     rewCat=p.versionRewardCat;
+% p.                                                                                                                                                                                                                                                                                                                                                                            =input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
+% 
+% %%
 
 %%% PRACTICE %%%
 
@@ -66,7 +72,7 @@ p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
     objectsDir='StimuliPD/Practice/objects/';
     objects=dir([objectsDir, '*.jpg']); 
 
-    if p.day==1 % list 1
+    if day==1 % list 1
         scenes=scenes(1:round(numel(scenes)/2));
         objects=objects(1:round(numel(objects)/2));
     else
@@ -264,7 +270,10 @@ disp('line 215')
         
 %%        
 %%MS: need to think whether it makes sense to have a single list of
-%%semi-prob outcome assignments
+%%semi-prob outcome assignments so that can match people
+
+%%
+%MS: i think it's better if we don't show the chosen image at feedback
 %%
 
         if isnan(resp) % Does not respond in time?
@@ -276,58 +285,66 @@ disp('line 215')
             WaitSecs(2);
         elseif pr.rewProb(t)==1
             if (resp==1 && pr.SorR(t)==rewCat) || (resp==2 && abs(3-pr.SorR(t))==rewCat)
-                if resp==1
-                    Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
-                elseif resp==2
-                    Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
-                end
-                Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
+%                 if resp==1
+%                     Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
+%                 elseif resp==2
+%                     Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
+%                 end
+%                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
+                %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
+                DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 pr.reward(t)=1;
+                pr.optimal(t)=1; %MS: here feedback is congruent, so won=optimal
                 WaitSecs(1);
             else % rewprob = 1 but chosen category ~= rewarded category
-                if resp==1
-                    Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
-                elseif resp==2
-                    Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
-                end
-                Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
+%                 if resp==1
+%                     Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 elseif resp==2
+%                     Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 end
+%                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
+                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 pr.reward(t)=0;
+                pr.optimal(t)=0;
                 WaitSecs(1);
             end
         elseif pr.rewProb(t)==0
            if (resp==1 && pr.SorR(t)==rewCat) || (resp==2 &&  abs(3-pr.SorR(t))==rewCat)
-               if resp==1
-                Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
-               elseif resp==2
-                Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
-               end
-                Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
+%                if resp==1
+%                 Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
+%                elseif resp==2
+%                 Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
+%                end
+%                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
+                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 pr.reward(t)=0;
+                pr.optimal(t)=1; %MS: here feedback is non-congruent, so won=non-optimal
                 WaitSecs(1);
            elseif (resp==1 && pr.SorR(t)~=rewCat) || (resp==2 &&  abs(3-pr.SorR(t))~=rewCat)
-                if resp==1
-                    Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
-                elseif resp==2
-                    Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
-                end
-                Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
+%                 if resp==1
+%                     Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 elseif resp==2
+%                     Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 end
+%                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
+                DrawFormattedText(window,'you won!!', 'center','center', [0 255 0]);
+                %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 pr.reward(t)=1;
+                pr.optimal(t)=0;
                 WaitSecs(1);
            end
         end    
@@ -339,6 +356,13 @@ disp('line 215')
  %catch
  
  disp('end')
- Screen('CloseAll');
+ 
+%MS: the if statement beow was Jochen's idea to control whether screen closes
+%or not.  But in the end I re-open it before the post-practice instructions
+%  if nargin < 3 || ~islogical(noscreenclose) || ~noscreenclose % this is to avoid closing the screen so that the practice_instructions can continue to be displayed post practice
+%  disp('went into true state')
+%      Screen('CloseAll');
+%  end
+
   %rethrow(MException);
-%end
+end

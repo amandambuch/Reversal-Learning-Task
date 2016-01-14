@@ -3,11 +3,49 @@
 % in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
 
-%MS changes made/questions (and see below): 1) nTrials/2 --> nTrials; 2)
-%multiple reversals?
+%MS changes (all changes labelled with MS in the script as well): 
+%made all nTrials/2 into just nTrials -- i might be missing some strategy
+%added strucure prefix to a bunch of variables eg. trialsS-->aq.trialsS
+%changed scaned to 0/1 var
+%added aq.optimal variable
+%added a output matrix to save variables of interest in this format (easier
+%for me for later)
+%also saving out the space. just in case, useful especially in the
+%beginning
+%deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, folder_name)
+%function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, p.SubjectNumber)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
+
+%% just for troubleshooting purposes, not running as function so I can see the variables in workspace
+
+direc='../Subjects/'; % enter subject directory here
+
+KbName('UnifyKeyNames');
+rand('state',sum(100*clock));
+okResp=KbName('space'); 
+
+p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
+p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
+    day=p.day; %MS since not running out of wrapper
+
+folder_name=(sprintf('Subjects/Subject%d/day%d',p.SubjectNumber,p.day));
+if ~exist(folder_name, 'dir')
+    mkdir (sprintf('%s',folder_name))
+else
+    disp(['Error directory exists for subject ' num2str(p.SubjectNumber) ' for day ' num2str(p.day)])
+    return
+end
+
+p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
+p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
+p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
+    rewCat=p.versionRewardCat;
+p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
+
+
+save (sprintf('%s/inputP',folder_name), 'p')
+%%
 
 % aq is the structure that contains all the matrices to be saved
 % disp('line here') are tempory for troubleshooting purposes
@@ -15,10 +53,13 @@ Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running
 %% Setting up the environment
     rand('state',sum(100*clock));  % reset the state of rand to a random value
 
+%MS: changed scanned to 1/2 coding
+
+    
     % Key Responses    
     KbName('UnifyKeyNames');
     escapeKey=KbName('q');
-    if scanned==0
+    if scanned==2
         leftResp=KbName('j');
         rightResp=KbName('k');
         okResp=KbName('space');
@@ -51,13 +92,15 @@ try
     [cx,cy]=RectCenter(windrect); %center point of screen
     [xPoints, yPoints]=RectSize(windrect);    
     disp(['Center is ',num2str(cx), ' ',num2str(cy), ' and winsize is ', num2str(xPoints), num2str(yPoints)])
-    pause
+    %pause
     
     %% Locate and Choose the Stimuli
     rnd=NaN;
-    scenesDir='StimuliPD/Aquisition/800Scenes/'; %directory of 1st category
+    scenesDir='StimuliPD/Practice/scenes/';
+    %scenesDir='StimuliPD/Aquisition/800Scenes/'; %directory of 1st category
     scenes=dir([scenesDir, '*.jpg']);
-    objectsDir='StimuliPD/Aquisition/800Objects/';  %directory of 2nd category
+    objectsDir='StimuliPD/Practice/objects/';
+    %objectsDir='StimuliPD/Aquisition/800Objects/';  %directory of 2nd category
     objects=dir([objectsDir, '*.jpg']);
    
     % MS: decide whether to split stimuli in half before or after
@@ -77,7 +120,7 @@ try
         rnd=1;
     end
     
-    nTrials=uint16(numel(scenes)*2); % length(trials) numel(scenes)
+    nTrials=uint16(numel(scenes)); %*2); MS: trials=#scenes since both scene and object shown simult % length(trials) numel(scenes)
     aq.scenes=cell(numel(scenes),1);
     aq.objects=aq.scenes;
     img=cell(numel(scenes),2); % the stimuli converted to a screen texture for presentation later in script
@@ -99,7 +142,7 @@ try
     disp('line 67')
     % these can be modified depending on the size the stimuli should be
     % when presented on screen 
-    StimRect=StimRect*(yPoints/5*2)./StimRect(3); %makes the StimRect a fraction of the size of the screen window, keeping same proportions
+    StimRect=StimRect*(yPoints/6*2)./StimRect(3); %makes the StimRect a fraction of the size of the screen window, keeping same proportions
     
     StimX1=cx-(RectWidth(StimRect)/2)-((yPoints/2.5)-RectWidth(StimRect))/2;
     StimX2=cx+(RectWidth(StimRect)/2)+((yPoints/2.5)-RectWidth(StimRect))/2;
@@ -122,8 +165,8 @@ try
     aq.rewProb(1:x)=1;
     aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb)));
 disp(['# trials is ' num2str(nTrials) 'on line 107']);
-    aq.trialsS=randperm(nTrials/2); %creates random order for scenes
-    aq.trialsO=randperm(nTrials/2); %a separate random list for objects
+    aq.trialsS=randperm(nTrials); %MS: /2); %creates random order for scenes
+    aq.trialsO=randperm(nTrials); %MS: /2); %a separate random list for objects
     aq.SorR=ones(1,nTrials); %which category will appear on the left
     x=nTrials/2;
     aq.SorR(1:x)=2;
@@ -134,7 +177,7 @@ disp(['# trials is ' num2str(nTrials) 'on line 107']);
     %aq.reversalAt=randi([90 110],1,1); % sets reversal at random value between 90 and 110
     aq.reversalAt=10;
     b=0;
-    aq.blockLength=40;
+    aq.blockLength=6; %MS: 40;
     aq.breaks=NaN(1,nTrials/aq.blockLength-1);
     aq.breaksLength=aq.breaks;
     aq.reward=aq.breaks;
@@ -161,7 +204,7 @@ escape=0;
         
     %% Start of Trial Aquisition %%
     reversal=0;
-    for t=1:nTrials/2
+    for t=1:nTrials %MS: i'm probably missing something but I changed all the nTrials/2 to nTrials...
         if t>aq.reversalAt && reversal==0 % when trial number is greater than reversal point and reversal has not occured yet
             reversal=reversal+1;
             rewCat=abs(3-rewCat);
@@ -185,11 +228,11 @@ escape=0;
         end
         
         if aq.SorR(t) == 1 % Place scene in stimBox1 on Left
-            trials1=trialsS(t);
-            trials2=trialsO(t);
+            trials1=aq.trialsS(t); %MS: added aq.
+            trials2=aq.trialsO(t);
         elseif aq.SorR(t) == 2 % Place object in stimBox1 on Left
-            trials1=trialsO(t);
-            trials2=trialsS(t);
+            trials1=aq.trialsO(t);
+            trials2=aq.trialsS(t);
         end
         %%%% SHOW STIMULI %%%%
         disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and SorR is' num2str(aq.SorR(t)) ' and size of img' num2str(size(img))])
@@ -276,72 +319,105 @@ escape=0;
             DrawFormattedText(window,' Too Slow! ', 'center','center', [0 0 0]);
             [VBLTimestamp startFB(t)]=Screen('Flip', window);
             aq.reward(t)=NaN;
+            aq.optimal(t)=NaN;
             WaitSecs(2);
         elseif aq.rewProb(t)==1
             if (resp==1 && aq.SorR(t)==rewCat) || (resp==2 && abs(3-aq.SorR(t))==rewCat)
-                if resp==1
-                    Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
-                elseif resp==2
-                    Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
-                end
-                Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
+%                 if resp==1
+%                     Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
+%                 elseif resp==2
+%                     Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
+%                 end
+%                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
+                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 aq.reward(t)=1;
+                aq.optimal(t)=1;
                 WaitSecs(1);
             else % rewprob = 1 but chosen category ~= rewarded category
-                if resp==1
-                    Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
-                elseif resp==2
-                    Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
-                end
-                Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
+%                 if resp==1
+%                     Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 elseif resp==2
+%                     Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 end
+%                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
+                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 aq.reward(t)=0;
+                aq.optimal(t)=0;
                 WaitSecs(1);
             end
         elseif aq.rewProb(t)==0
            if (resp==1 && aq.SorR(t)==rewCat) || (resp==2 &&  abs(3-aq.SorR(t))==rewCat)
-               if resp==1
-                Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
-               elseif resp==2
-                Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
-               end
-                Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
+%                if resp==1
+%                 Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
+%                elseif resp==2
+%                 Screen('DrawTexture', window, img{trials2,rewCat}, [], StimBox); %%%% 
+%                end
+%                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
+                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 aq.reward(t)=0;
+                aq.optimal(t)=1;
                 WaitSecs(1);
            elseif (resp==1 && aq.SorR(t)~=rewCat) || (resp==2 &&  abs(3-aq.SorR(t))~=rewCat)
-                if resp==1
-                    Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
-                elseif resp==2
-                    Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
-                end
-                Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
+%                 if resp==1
+%                     Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 elseif resp==2
+%                     Screen('DrawTexture', window, img{trials2,abs(3-rewCat)}, [], StimBox); %%%% 
+%                 end
+%                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
+                DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
+                %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
                 [VBLTimestamp startFB2(t)]=Screen('Flip', window);
                 aq.reward(t)=1;
+                aq.optimal(t)=0;
                 WaitSecs(1);
            end
         end    
         [VBLTimestamp FBOffTime(t)]=Screen('Flip', window);    % remove feedback               
-      
+    
+        
+    %% MS: create an output matrix
+    
+        outputmat(t,1)=p.SubjectNumber;
+        outputmat(t,2)=t;
+        outputmat(t,3)=day;
+        outputmat(t,4)=trials1;
+        outputmat(t,5)=trials2;
+        outputmat(t,6)=aq.SorR(t); %this is image category on Left?
+        outputmat(t,7)=rewCat;
+        outputmat(t,8)=resp; %1=left, 2=right
+        outputmat(t,9)=aq.rewProb(t);
+        outputmat(t,10)=aq.reward(t); %feedback they were acually given
+        outputmat(t,11)=aq.optimal(t);
+        %MS: i want to also save the number of the images shown on each
+        %trial. Not sure which variable best for this. The img variable
+        %does not seem to be saving the correct number as the numbers don't
+        %match anything else that I can find
+    
+    
+    
+    %%
+        
     %% Save frequently and set blocks
             if mod(t,10)==1
-                save(sprintf('%s/aquisitionAQ',folder_name),'aq')
+                save(sprintf('%s/aquisitionAQ',folder_name),'aq');
+                save(sprintf('%s/AQmat',folder_name),'outputmat');
             end
             % below is where we could move the image loading to
-            if mod(t,40)==0 && t<nTrials
+            if mod(t,6)==0 && t<nTrials %MS changed block length to 6 for testing
                 b=b+1;
                 aq.breaks(b)=GetSecs;
                 Screen('TextSize',window, [30]);
@@ -359,10 +435,12 @@ escape=0;
             
     end % end trial loop
         save(sprintf('%s/aquisitionAQ',folder_name),'aq')
+        save(sprintf('%s/AQmat',folder_name),'outputmat');
+        save(sprintf('%s/space',folder_name))
         escape=1;
  end
  
-    aq.totalPoints=nansum(reward)*10;
+    aq.totalPoints=nansum(aq.reward)*10;
     DrawFormattedText(window,['You are finished! \n\n You won ' num2str(aq.totalPoints,'%1.0f') ' points \n\n Please inform the experimenter.'], 'center','center', [0 0 0]);    
     Screen('Flip', window);    
     WaitSecs(5);   
@@ -376,10 +454,10 @@ escape=0;
     escape=1;          %#ok<NASGU> % Exit after last trial
 catch
     Screen('CloseAll');
-    save(sprintf('%s/crashwork',folder_name),'crashWork'); %this saves the workspace (minus those cells) in event of a crash, for debugging
+    %save(sprintf('%s/crashwork',folder_name),'crashWork'); %this saves the workspace (minus those cells) in event of a crash, for debugging
     ShowCursor;
     fclose('all');
     Priority(0);
     psychrethrow(psychlasterror);
  end %end the while loop
-end    
+%end    

@@ -2,12 +2,12 @@
 % Modified from shopping learning task written by Madeleine Sharp, MD
 % in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
-function ReversalTask_Instructions
+function ReversalTask_Instructions(rewCat,scanned)
 
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
 
-if scanned==0
+if scanned==2
     okResp=KbName('space');
 else
     okResp=KbName('1!');
@@ -36,17 +36,18 @@ try
         imgRect{i}=RectOfMatrix(o); %gets rects of ImagesArrays
         imgCell{i}=cat(3,o,alpha); %combines RBG matrix and alpha (transperency)
         imgTexCell{i}=Screen('MakeTexture', window, imgCell{i});
+disp('read all in instructions-main');
     end    
 
     %%%%%%%%% done reading images - prepare Display%%%%%%%%%%%%%%%%%%%%%%%
 
     %%% Display instructions
     
-    for i=1:numel(imgTexCell) % these are the instructions that appear before the practice
+    for i=1:numel(imgTexCell) % these are the final instructions before the real game
         Screen('DrawTexture', window, imgTexCell{i});
         [VBLTimestamp startChoice]=Screen('Flip', window);
         [keyIsDown,TimeStamp,keyCode] = KbCheck;
-        
+disp('instructions-main display loop');        
         WaitSecs(.5);
         while(1)
             [keyIsDown,TimeStamp,keyCode] = KbCheck;
@@ -56,6 +57,7 @@ try
                 break; %so move on to next screeen as soon as spacebar is pressed
             end
         end
+disp('instructions-main display loop-post taking specebar press');
     end
     
     Screen('CloseAll');
