@@ -1,7 +1,12 @@
+%%%%%%%%%%%%%%%%%
 % Behavioral Reversal Learning Task written by Amanda Buch
 % Modified from shopping learning task written by Madeleine Sharp, MD
 % in the lab of Daphna Shohamy, PhD at Columbia University
 % Last Updated December 17, 2015
+
+%MS: commented out the scanner-relevant bit because can't find getexternals
+%or equivalent function
+
 function ReversalTask_MAIN
 % main file that runs sections of task and takes initial input
 dir='../Subjects/'; % enter subject directory here
@@ -24,7 +29,7 @@ end
 p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
 p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
 p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
-p.scanned('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
+p.scanned=input('Is this an fMRI experiment (1=yes, 2=no)?:  ');
 
 if p.versionRewardCat~= 1 && p.versionRewardCat~=2
     Screen('CloseAll');
@@ -34,44 +39,47 @@ if p.versionRewardCat~= 1 && p.versionRewardCat~=2
 end
 save (sprintf('%s/inputP',folder_name), 'p')
 
-if practice==1
-    pr=ReversalTask_PracticeInstructions(p.versionRewardCat);
+if p.practice==1
+    pr=ReversalTask_PracticeInstructions(p.versionRewardCat, p.day);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %     'memory' 'stimSet' 'listNum' 'versionRewardCat'
     %pr = ReversalTask_Practice(p.versionRewardCat,p.day);
 end
 save(sprintf('%s/practicePR',folder_name),'pr')
 
-[trigger,kb,buttonBox]=getExternals;
-if scanned==0;
-    trigger=kb;
-    buttonBox=kb;
-elseif scanned==1
-    error=0;
-    if trigger==0
-        err=MException('AcctError:Incomplete', 'trigger box not detected');
-        error=1;
-    end
-    if kb==0
-        err=MException('AcctError:Incomplete', 'internal key board not detected');
-        error=1;
-    end
-    if buttonBox==0
-        err=MException('AcctError:Incomplete', 'Button Box not detected');
-        error=1;
-    end
-    
-    if error
-        throw(err)
-    end
-end
+%[trigger,kb,buttonBox]=getExternals; 
+%MS: couldn't find this function so
+%commented out the whole next section for now for non-MRI piloting purposes
+%MS: must changed scanned to 1/2 coding
+% if p.scanned==0;
+%     trigger=kb;
+%     buttonBox=kb;
+% elseif p.scanned==1
+%     error=0;
+%     if trigger==0
+%         err=MException('AcctError:Incomplete', 'trigger box not detected');
+%         error=1;
+%     end
+%     if kb==0
+%         err=MException('AcctError:Incomplete', 'internal key board not detected');
+%         error=1;
+%     end
+%     if buttonBox==0
+%         err=MException('AcctError:Incomplete', 'Button Box not detected');
+%         error=1;
+%     end
+%     
+%     if error
+%         throw(err)
+%     end
+% end
 
-if acquisition ==1
-     ReversalTask_Instructions(versionRewardCat,scanned);
+if p.acquisition ==1
+     ReversalTask_Instructions(p.versionRewardCat,p.scanned);
      %PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name,scanned);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %         'memory' 'stimSet' 'listNum' 'versionRewardCat'
-     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,folder_name);
+     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,p.scanned,folder_name, p.SubjectNumber);
 
 % end
 save(sprintf('%s/aquisitionAQfin',folder_name),'aq')
