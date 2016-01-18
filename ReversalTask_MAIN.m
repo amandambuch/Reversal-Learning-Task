@@ -47,32 +47,30 @@ if p.practice==1
 end
 save(sprintf('%s/practicePR',folder_name),'pr')
 
-%[trigger,kb,buttonBox]=getExternals; 
-%MS: couldn't find this function so
-%commented out the whole next section for now for non-MRI piloting purposes
-%MS: must changed scanned to 1/2 coding
-% if p.scanned==0;
-%     trigger=kb;
-%     buttonBox=kb;
-% elseif p.scanned==1
-%     error=0;
-%     if trigger==0
-%         err=MException('AcctError:Incomplete', 'trigger box not detected');
-%         error=1;
-%     end
-%     if kb==0
-%         err=MException('AcctError:Incomplete', 'internal key board not detected');
-%         error=1;
-%     end
-%     if buttonBox==0
-%         err=MException('AcctError:Incomplete', 'Button Box not detected');
-%         error=1;
-%     end
-%     
-%     if error
-%         throw(err)
-%     end
-% end
+[trigger,kb,buttonBox]=getExternals; 
+
+if p.scanned==2;
+     trigger=kb;
+     buttonBox=kb;
+elseif p.scanned==1
+     error=0;
+     if trigger==0
+         err=MException('AcctError:Incomplete', 'trigger box not detected');
+         error=1;
+     end
+     if kb==0
+         err=MException('AcctError:Incomplete', 'internal key board not detected');
+         error=1;
+     end
+     if buttonBox==0
+         err=MException('AcctError:Incomplete', 'Button Box not detected');
+         error=1;
+     end
+     
+     if error
+         throw(err)
+     end
+ end
 
 if p.acquisition ==1
      ReversalTask_Instructions(p.versionRewardCat,p.scanned);
