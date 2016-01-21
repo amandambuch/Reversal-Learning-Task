@@ -77,7 +77,10 @@ if p.acquisition ==1
      %PD_Aquisition(SubjectNumber, stimSet, versionRewardCat,folder_name,scanned);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %         'memory' 'stimSet' 'listNum' 'versionRewardCat'
-     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,p.scanned,folder_name, p.SubjectNumber);
+     prob=.8; % move variable to top
+     blockLength=30;
+     nTrials=150; %total number of trials for 1 day
+     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,p.scanned,folder_name, p.SubjectNumber,prob,blockLength,nTrials);
 
 % end
 save(sprintf('%s/aquisitionAQfin',folder_name),'aq')
