@@ -96,46 +96,102 @@ try
     disp(['Center is ',num2str(cx), ' ',num2str(cy), ' and winsize is ', num2str(xPoints), num2str(yPoints)])
     %pause
     
+        scenesDir='StimuliPD/Aquisition/300Scenes/';
+    objectsDir='StimuliPD/Aquisition/300Objects/';
+
+if day == 1 %set and save randomized list    
     %% Locate and Choose the Stimuli
-    rnd=NaN;
-    scenesDir='StimuliPD/Aquisition/300Scenes/';
+
     %scenesDir='StimuliPD/Aquisition/800Scenes/'; %directory of 1st category
     scenes=dir([scenesDir, '*.jpg']);
-    objectsDir='StimuliPD/Aquisition/300Objects/';
     %objectsDir='StimuliPD/Aquisition/800Objects/';  %directory of 2nd category
     objects=dir([objectsDir, '*.jpg']);
-   
-    % MS: decide whether to split stimuli in half before or after
-    % randomizing--will need to save out the list order for each subject so
-    % that can be loaded on Day2
     
-    % MS: what is rnd?
+    %nTrials=uint16(numel(scenes)); %total trial number for sum of both days based on total number of stimuli from 1 category (since scenes=objects)
+    %nTrials now set in main
+    %% Probability of Reward
+    aq.prob=prob;  %now probability distribution is set in main functino
+    aq.rewProb=zeros(1,nTrials); %create zero matrix of numel(nTrials) 
+    x=aq.prob*(nTrials); % determine number of rewarded trials based on probability and total trial number
+    aq.rewProb(1:x)=1; % change the rewarded trials from 0 to 1
+    aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb))); %randomize order of rewarded trials
+    %disp(['# trials is ' num2str(nTrials) 'on line 107']);
     
-    % stimuli list; may need to save random stimuli order for each subject
-    if day==1 && rnd~=1 % list 1 for day 1, takes 1st half of stimuli
-        scenes=scenes(1:(floor(numel(scenes)/2)));
-        objects=objects(1:(floor(numel(objects)/2)));
-        rnd=1;
-    elseif day==2 && rnd~=1 % list 2 for day 2, takes 2nd half of stimuli
-        scenes=scenes((round(numel(scenes)/2))):round(numel(scenes));
-        objects=objects((round(numel(objects)/2))):round(numel(objects));
-        rnd=1;
-    end
+    %% which is on left
+    aq.stimOnLeft=ones(1,nTrials); %create matrix of ones to determine which category (1=scene, 2=object) will appear on the left
+    x=nTrials/2; 
+    aq.stimOnLeft(1:x)=2; %object =1/2 trials
+    aq.stimOnLeft=aq.stimOnLeft(randperm(numel(aq.stimOnLeft))); % random ordering for Stimuli presented in stimBox1 on left (1=scene, 2=object)
+
+    %% randomize
+    nS=randperm(nTrials*2); %creates random order(permutation of nTrials) for scenes
+    aq.trialsS=nS;
+    nO=randperm(nTrials*2);  %a separate random list for objects
+    aq.trialsO=nO;
     
-    nTrials=uint16(numel(scenes)); %*2); MS: trials=#scenes since both scene and object shown simult % length(trials) numel(scenes)
-    aq.scenes=cell(numel(scenes),1);
+    %% choose second half to load
+    aq.scenesList= scenes(nS);  % apply random order to file name list
+    tempS=aq.scenesList;
+    aq.objectsList= scenes(nO);
+    tempO=aq.objectsList;
+    
+    aq.halfScenesList=scenes(1:(floor(numel(tempS)/2))); % choose only half to be presented per day
+    aq.halfObjectsList=objects(1:(floor(numel(tempO)/2)));
+    
+    
+    save(sprintf('%s/scenesList',folder_name),'aq.scenesList'); % save total randomized directory list to load later
+    save(sprintf('%s/objectsList',folder_name),'aq.objectsList');
+    %save(sprintf('%s/trialsS',folder_name),'aq.trialsS');    
+    %save(sprintf('%s/trialsO',folder_name),'aq.trialsO');    
+    
+elseif day == 2  % load randomized lists for reward proability, scenes/objects order, and stimuli presented on left order and choose second half
+    load(sprintf('%s/scenesList',folder_name)); %loads aq.scenesList
+    load(sprintf('%s/objectsList',folder_name)); %loads aq.objectsList
+ 
+    %% Probability of Reward
+    aq.prob=prob;  %now probability distribution is set in main functino
+    aq.rewProb=zeros(1,nTrials); %create zero matrix of numel(nTrials) 
+    x=aq.prob*nTrials; % determine number of rewarded trials based on probability and total trial number
+    aq.rewProb(1:x)=1; % change the rewarded trials from 0 to 1
+    aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb))); %randomize order of rewarded trials
+    %disp(['# trials is ' num2str(nTrials) 'on line 107']);
+    
+    %% which is on left
+    aq.stimOnLeft=ones(1,nTrials); %create matrix of ones to determine which category (1=scene, 2=object) will appear on the left
+    x=nTrials/2; 
+    aq.stimOnLeft(1:x)=2; %object =1/2 trials
+    aq.stimOnLeft=aq.stimOnLeft(randperm(numel(aq.stimOnLeft))); % random ordering for Stimuli presented in stimBox1 on left (1=scene, 2=object)
+
+    tempS=aq.scenesList;
+	tempO=aq.objectsList;
+    aq.halfScenesList=tempS((round(numel(tempS)/2))):round(numel(tempS));
+    aq.halfObjectsList=tempO((round(numel(tempO)/2))):round(numel(tempO));
+end
+
+    aq.chosenSide=NaN(1,nTrials);%creates null matrix that will be populated by participant choices
+    aq.chosenStim=aq.chosenSide;
+    aq.rt=aq.chosenSide;
+
+    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
+    b=0;
+    aq.blockLength=blockLength; %now set in main function
+    aq.breaks=NaN(1,nTrials/aq.blockLength-1);
+    aq.breaksLength=aq.breaks;
+    aq.reward=aq.breaks;
+    
+    aq.scenes=cell(numel(halfScenesList),1);
     aq.objects=aq.scenes;
-    img=cell(numel(scenes),2); % the stimuli converted to a screen texture for presentation later in script
-    for i=1:numel(scenes); % now size of objects and scenes arrays are both 1/2 the size
-        [o,~,alpha]=imread([scenesDir scenes(i).name], 'jpg');
+    img=cell(numel(halfScenesList),2); % the stimuli converted to a screen texture for presentation later in script
+    for i=1:numel(halfScenesList) % now size of objects and scenes arrays are both 1/2 the size
+        [o,~,alpha]=imread([scenesDir halfScenesList(i)], 'jpg');
         StimCell=cat(3,o,alpha);
         img{i,1}=Screen('MakeTexture',window, StimCell);
-        aq.scenes(i)=cellstr(scenes(i).name);        
-        [o,~,alpha]=imread([objectsDir objects(i).name], 'jpg');
+        aq.scenes(i)=cellstr(halfScenesList(i));        
+        [o,~,alpha]=imread([objectsDir halfObjectsList(i)], 'jpg');
         StimRect=RectOfMatrix(o);
         StimCell=cat(3,o,alpha);
         img{i,2}=Screen('MakeTexture',window, StimCell);
-        aq.objects(i)=cellstr(objects(i).name);
+        aq.objects(i)=cellstr(halfObjectsList(i));
         DrawFormattedText(window, ['Reading image #', num2str(i)], 'center','center', [0 0 0]); % temporary for coding purposes
         Screen('Flip', window);
     end  
@@ -158,31 +214,6 @@ try
     StimBoxFrame=CenterRectOnPoint([0 0 xPoints/4 xPoints/4]*1.2,cx,cy);
     DrawFormattedText(window, ['Images prepared.'], 'center','center', [0 0 0]);
     Screen('Flip', window);
-
-%% Set Information for Trial Design 
-%(instantiates variables)
-    aq.rewProb=zeros(1,nTrials);
-    aq.prob=.8;
-    x=aq.prob*nTrials;
-    aq.rewProb(1:x)=1;
-    aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb)));
-disp(['# trials is ' num2str(nTrials) 'on line 107']);
-    aq.trialsS=randperm(nTrials); %MS: /2); %creates random order for scenes
-    aq.trialsO=randperm(nTrials); %MS: /2); %a separate random list for objects
-    aq.SorR=ones(1,nTrials); %which category will appear on the left
-    x=nTrials/2;
-    aq.SorR(1:x)=2;
-    aq.SorR=aq.SorR(randperm(numel(aq.SorR))); % Stimuli for stimBox1 on Left (1=scene, 2=object)
-    aq.chosenSide=NaN(1,nTrials);
-    aq.chosenStim=aq.chosenSide;
-    aq.rt=aq.chosenSide;
-    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
-    %aq.reversalAt=10;
-    b=0;
-    aq.blockLength=30; %MS: 40;
-    aq.breaks=NaN(1,nTrials/aq.blockLength-1);
-    aq.breaksLength=aq.breaks;
-    aq.reward=aq.breaks;
 
    %%  Write Instructions and check for escape key
     DrawFormattedText(window,['Which category is more likely to be correct? \n\n Use the ''j'' key for Left \n use the ''k'' key for Right \n\n\n Press SPACE BAR to start'], 'center','center', [0 0 0]);
