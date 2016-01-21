@@ -260,20 +260,20 @@ escape=0;
             break
         end
         
-        if aq.SorR(t) == 1 % Place scene in stimBox1 on Left
+        if aq.stimOnLeft(t) == 1 % Place scene in stimBox1 on Left
             trials1=aq.trialsS(t); %MS: added aq.
             trials2=aq.trialsO(t);
-        elseif aq.SorR(t) == 2 % Place object in stimBox1 on Left
+        elseif aq.stimOnLeft(t) == 2 % Place object in stimBox1 on Left
             trials1=aq.trialsO(t);
             trials2=aq.trialsS(t);
         end
         %%%% SHOW STIMULI %%%%
-        %disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and SorR is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
-        disp(['t is ' num2str(t) ' and SorR is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
+        %disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and stimOnLeft is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
+        disp(['t is ' num2str(t) ' and stimOnLeft is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
         
-        Screen('DrawTexture', window, img{t,aq.stimOnLeft(t)}, [], StimBox1); % render stimuli image in StimBox1 (L); img{i,j} category chosen by SorR and image in list by j
+        Screen('DrawTexture', window, img{t,aq.stimOnLeft(t)}, [], StimBox1); % render stimuli image in StimBox1 (L); img{i,j} category chosen by stimOnLeft and image in list by j
         Screen('FrameRect',window, black, StimBox1, 4);
-        Screen('DrawTexture', window, img{t,abs(aq.SorR(t)-3)}, [], StimBox2);
+        Screen('DrawTexture', window, img{t,abs(aq.stimOnLeft(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
         [VBLTimestamp startChoice(t)]=Screen('Flip', window); % displays on screen and starts choice timing    
         
@@ -317,21 +317,21 @@ escape=0;
         aq.keyPressed(t)=resp;
 
         % Add Yellow Frame to Chosen Stimuli
-        Screen('DrawTexture', window, img{t,aq.SorR(t)}, [], StimBox1);
+        Screen('DrawTexture', window, img{t,aq.stimOnLeft(t)}, [], StimBox1);
         Screen('FrameRect',window, black, StimBox1, 4);
-        Screen('DrawTexture', window, img{t,abs(aq.SorR(t)-3)}, [], StimBox2);
+        Screen('DrawTexture', window, img{t,abs(aq.stimOnLeft(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
 
         if isequal(resp,'j')
             aq.chosenSide(t)=1; % i.e. Left
-            aq.chosenStim(t)=img{t,aq.SorR(t)}; 
+            aq.chosenStim(t)=img{t,aq.stimOnLeft(t)}; 
             Screen('FrameRect',window, [255 255 0], StimBox1Frame, 6);
             Screen('Flip', window); % show response
             WaitSecs(.5); %so show the feedback for 0.5sec
             resp=1;
         elseif isequal(resp,'k')
             aq.chosenSide(t)=2; % i.e. Right
-            aq.chosenStim(t)=img{t,abs(aq.SorR(t)-3)};
+            aq.chosenStim(t)=img{t,abs(aq.stimOnLeft(t)-3)};
             Screen('FrameRect',window, [255 255 0], StimBox2Frame, 6);
             Screen('Flip', window); % show response
             WaitSecs(.5);
@@ -356,7 +356,7 @@ escape=0;
             aq.optimal(t)=NaN;
             WaitSecs(2);
         elseif aq.rewProb(t)==1
-            if (resp==1 && aq.SorR(t)==rewCat) || (resp==2 && abs(3-aq.SorR(t))==rewCat)
+            if (resp==1 && aq.stimOnLeft(t)==rewCat) || (resp==2 && abs(3-aq.stimOnLeft(t))==rewCat)
 %                 if resp==1
 %                     Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
 %                 elseif resp==2
@@ -388,7 +388,7 @@ escape=0;
                 WaitSecs(1);
             end
         elseif aq.rewProb(t)==0
-           if (resp==1 && aq.SorR(t)==rewCat) || (resp==2 &&  abs(3-aq.SorR(t))==rewCat)
+           if (resp==1 && aq.stimOnLeft(t)==rewCat) || (resp==2 &&  abs(3-aq.stimOnLeft(t))==rewCat)
 %                if resp==1
 %                 Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
 %                elseif resp==2
@@ -403,7 +403,7 @@ escape=0;
                 aq.reward(t)=0;
                 aq.optimal(t)=1;
                 WaitSecs(1);
-           elseif (resp==1 && aq.SorR(t)~=rewCat) || (resp==2 &&  abs(3-aq.SorR(t))~=rewCat)
+           elseif (resp==1 && aq.stimOnLeft(t)~=rewCat) || (resp==2 &&  abs(3-aq.stimOnLeft(t))~=rewCat)
 %                 if resp==1
 %                     Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
 %                 elseif resp==2
@@ -434,7 +434,7 @@ escape=0;
         %outputmat(t,5)=trials2;
         outputmat(t,4)=aq.halfScenesList;
         outputmat(t,5)=aq.halfObjectsList;
-        outputmat(t,6)=aq.SorR(t); %this is image category on Left?
+        outputmat(t,6)=aq.stimOnLeft(t); %this is image category on Left?
         outputmat(t,7)=rewCat;
         outputmat(t,8)=resp; %1=left, 2=right
         outputmat(t,9)=aq.rewProb(t);
