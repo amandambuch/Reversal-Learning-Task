@@ -14,7 +14,7 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
 % %% just for troubleshooting purposes, not running as function so I can see the variables in workspace
