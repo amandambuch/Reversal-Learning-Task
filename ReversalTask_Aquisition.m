@@ -268,11 +268,12 @@ escape=0;
             trials2=aq.trialsS(t);
         end
         %%%% SHOW STIMULI %%%%
-        disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and SorR is' num2str(aq.SorR(t)) ' and size of img' num2str(size(img))])
+        %disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and SorR is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
+        disp(['t is ' num2str(t) ' and SorR is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
         
-        Screen('DrawTexture', window, img{trials1,aq.SorR(t)}, [], StimBox1); % render stimuli image in StimBox1 (L); img{i,j} category chosen by SorR and image in list by j
+        Screen('DrawTexture', window, img{t,aq.stimOnLeft(t)}, [], StimBox1); % render stimuli image in StimBox1 (L); img{i,j} category chosen by SorR and image in list by j
         Screen('FrameRect',window, black, StimBox1, 4);
-        Screen('DrawTexture', window, img{trials2,abs(aq.SorR(t)-3)}, [], StimBox2);
+        Screen('DrawTexture', window, img{t,abs(aq.SorR(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
         [VBLTimestamp startChoice(t)]=Screen('Flip', window); % displays on screen and starts choice timing    
         
@@ -316,21 +317,21 @@ escape=0;
         aq.keyPressed(t)=resp;
 
         % Add Yellow Frame to Chosen Stimuli
-        Screen('DrawTexture', window, img{trials1,aq.SorR(t)}, [], StimBox1);
+        Screen('DrawTexture', window, img{t,aq.SorR(t)}, [], StimBox1);
         Screen('FrameRect',window, black, StimBox1, 4);
-        Screen('DrawTexture', window, img{trials2,abs(aq.SorR(t)-3)}, [], StimBox2);
+        Screen('DrawTexture', window, img{t,abs(aq.SorR(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
 
         if isequal(resp,'j')
             aq.chosenSide(t)=1; % i.e. Left
-            aq.chosenStim(t)=img{trials1,aq.SorR(t)}; 
+            aq.chosenStim(t)=img{t,aq.SorR(t)}; 
             Screen('FrameRect',window, [255 255 0], StimBox1Frame, 6);
             Screen('Flip', window); % show response
             WaitSecs(.5); %so show the feedback for 0.5sec
             resp=1;
         elseif isequal(resp,'k')
             aq.chosenSide(t)=2; % i.e. Right
-            aq.chosenStim(t)=img{trials2,abs(aq.SorR(t)-3)};
+            aq.chosenStim(t)=img{t,abs(aq.SorR(t)-3)};
             Screen('FrameRect',window, [255 255 0], StimBox2Frame, 6);
             Screen('Flip', window); % show response
             WaitSecs(.5);
@@ -427,8 +428,12 @@ escape=0;
         outputmat(t,1)=SubjectNumber;
         outputmat(t,2)=t;
         outputmat(t,3)=day;
-        outputmat(t,4)=trials1;
-        outputmat(t,5)=trials2;
+        %outputmat(t,4)=trials1; eliminated these - now halfScenesList and
+        %halfObjectsList used - have stimuli names in random permutation
+        %for half being used for day
+        %outputmat(t,5)=trials2;
+        outputmat(t,4)=aq.halfScenesList;
+        outputmat(t,5)=aq.halfObjectsList;
         outputmat(t,6)=aq.SorR(t); %this is image category on Left?
         outputmat(t,7)=rewCat;
         outputmat(t,8)=resp; %1=left, 2=right
@@ -446,8 +451,8 @@ escape=0;
         
     %% Save frequently and set blocks
             if mod(t,10)==1
-                save(sprintf('%s/aquisitionAQ',folder_name),'aq');
-                save(sprintf('%s/AQmat',folder_name),'outputmat');
+                save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq');
+                save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
             end
             % below is where we could move the image loading to
             if mod(t,aq.blockLength)==0 && t<nTrials %MS changed block length to 6 for testing
@@ -467,9 +472,9 @@ escape=0;
             end
             
     end % end trial loop
-        save(sprintf('%s/aquisitionAQ',folder_name),'aq')
-        save(sprintf('%s/AQmat',folder_name),'outputmat');
-        save(sprintf('%s/space',folder_name))
+        save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq')
+        save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
+        save(sprintf('%s/day%d/space',folder_name,day))
         escape=1;
  end
  
