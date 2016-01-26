@@ -14,7 +14,7 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
 % %% just for troubleshooting purposes, not running as function so I can see the variables in workspace
@@ -96,46 +96,102 @@ try
     disp(['Center is ',num2str(cx), ' ',num2str(cy), ' and winsize is ', num2str(xPoints), num2str(yPoints)])
     %pause
     
+        scenesDir='StimuliPD/Aquisition/300Scenes/';
+    objectsDir='StimuliPD/Aquisition/300Objects/';
+
+if day == 1 %set and save randomized list    
     %% Locate and Choose the Stimuli
-    rnd=NaN;
-    scenesDir='StimuliPD/Aquisition/300Scenes/';
+
     %scenesDir='StimuliPD/Aquisition/800Scenes/'; %directory of 1st category
     scenes=dir([scenesDir, '*.jpg']);
-    objectsDir='StimuliPD/Aquisition/300Objects/';
     %objectsDir='StimuliPD/Aquisition/800Objects/';  %directory of 2nd category
     objects=dir([objectsDir, '*.jpg']);
-   
-    % MS: decide whether to split stimuli in half before or after
-    % randomizing--will need to save out the list order for each subject so
-    % that can be loaded on Day2
     
-    % MS: what is rnd?
+    %nTrials=uint16(numel(scenes)); %total trial number for sum of both days based on total number of stimuli from 1 category (since scenes=objects)
+    %nTrials now set in main
+    %% Probability of Reward
+    aq.prob=prob;  %now probability distribution is set in main functino
+    aq.rewProb=zeros(1,nTrials); %create zero matrix of numel(nTrials) 
+    x=aq.prob*(nTrials); % determine number of rewarded trials based on probability and total trial number
+    aq.rewProb(1:x)=1; % change the rewarded trials from 0 to 1
+    aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb))); %randomize order of rewarded trials
+    %disp(['# trials is ' num2str(nTrials) 'on line 107']);
     
-    % stimuli list; may need to save random stimuli order for each subject
-    if day==1 && rnd~=1 % list 1 for day 1, takes 1st half of stimuli
-        scenes=scenes(1:(floor(numel(scenes)/2)));
-        objects=objects(1:(floor(numel(objects)/2)));
-        rnd=1;
-    elseif day==2 && rnd~=1 % list 2 for day 2, takes 2nd half of stimuli
-        scenes=scenes((round(numel(scenes)/2))):round(numel(scenes));
-        objects=objects((round(numel(objects)/2))):round(numel(objects));
-        rnd=1;
-    end
+    %% which is on left
+    aq.stimOnLeft=ones(1,nTrials); %create matrix of ones to determine which category (1=scene, 2=object) will appear on the left
+    x=nTrials/2; 
+    aq.stimOnLeft(1:x)=2; %object =1/2 trials
+    aq.stimOnLeft=aq.stimOnLeft(randperm(numel(aq.stimOnLeft))); % random ordering for Stimuli presented in stimBox1 on left (1=scene, 2=object)
+
+    %% randomize
+    nS=randperm(nTrials*2); %creates random order(permutation of nTrials) for scenes
+    aq.trialsS=nS;
+    nO=randperm(nTrials*2);  %a separate random list for objects
+    aq.trialsO=nO;
     
-    nTrials=uint16(numel(scenes)); %*2); MS: trials=#scenes since both scene and object shown simult % length(trials) numel(scenes)
-    aq.scenes=cell(numel(scenes),1);
+    %% choose second half to load
+    aq.scenesList= scenes(nS);  % apply random order to file name list
+    tempS=aq.scenesList;
+    aq.objectsList= scenes(nO);
+    tempO=aq.objectsList;
+    
+    aq.halfScenesList=scenes(1:(floor(numel(tempS)/2))); % choose only half to be presented per day
+    aq.halfObjectsList=objects(1:(floor(numel(tempO)/2)));
+    
+    
+    save(sprintf('%s/scenesList',folder_name),'aq.scenesList'); % save total randomized directory list to load later
+    save(sprintf('%s/objectsList',folder_name),'aq.objectsList');
+    %save(sprintf('%s/trialsS',folder_name),'aq.trialsS');    
+    %save(sprintf('%s/trialsO',folder_name),'aq.trialsO');    
+    
+elseif day == 2  % load randomized lists for reward proability, scenes/objects order, and stimuli presented on left order and choose second half
+    load(sprintf('%s/scenesList',folder_name)); %loads aq.scenesList
+    load(sprintf('%s/objectsList',folder_name)); %loads aq.objectsList
+ 
+    %% Probability of Reward
+    aq.prob=prob;  %now probability distribution is set in main functino
+    aq.rewProb=zeros(1,nTrials); %create zero matrix of numel(nTrials) 
+    x=aq.prob*nTrials; % determine number of rewarded trials based on probability and total trial number
+    aq.rewProb(1:x)=1; % change the rewarded trials from 0 to 1
+    aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb))); %randomize order of rewarded trials
+    %disp(['# trials is ' num2str(nTrials) 'on line 107']);
+    
+    %% which is on left
+    aq.stimOnLeft=ones(1,nTrials); %create matrix of ones to determine which category (1=scene, 2=object) will appear on the left
+    x=nTrials/2; 
+    aq.stimOnLeft(1:x)=2; %object =1/2 trials
+    aq.stimOnLeft=aq.stimOnLeft(randperm(numel(aq.stimOnLeft))); % random ordering for Stimuli presented in stimBox1 on left (1=scene, 2=object)
+
+    tempS=aq.scenesList;
+	tempO=aq.objectsList;
+    aq.halfScenesList=tempS((round(numel(tempS)/2))):round(numel(tempS));
+    aq.halfObjectsList=tempO((round(numel(tempO)/2))):round(numel(tempO));
+end
+
+    aq.chosenSide=NaN(1,nTrials);%creates null matrix that will be populated by participant choices
+    aq.chosenStim=aq.chosenSide;
+    aq.rt=aq.chosenSide;
+
+    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
+    b=0;
+    aq.blockLength=blockLength; %now set in main function
+    aq.breaks=NaN(1,nTrials/aq.blockLength-1);
+    aq.breaksLength=aq.breaks;
+    aq.reward=aq.breaks;
+    
+    aq.scenes=cell(numel(halfScenesList),1);
     aq.objects=aq.scenes;
-    img=cell(numel(scenes),2); % the stimuli converted to a screen texture for presentation later in script
-    for i=1:numel(scenes); % now size of objects and scenes arrays are both 1/2 the size
-        [o,~,alpha]=imread([scenesDir scenes(i).name], 'jpg');
+    img=cell(numel(halfScenesList),2); % the stimuli converted to a screen texture for presentation later in script
+    for i=1:numel(halfScenesList) % now size of objects and scenes arrays are both 1/2 the size
+        [o,~,alpha]=imread([scenesDir halfScenesList(i)], 'jpg');
         StimCell=cat(3,o,alpha);
         img{i,1}=Screen('MakeTexture',window, StimCell);
-        aq.scenes(i)=cellstr(scenes(i).name);        
-        [o,~,alpha]=imread([objectsDir objects(i).name], 'jpg');
+        aq.scenes(i)=cellstr(halfScenesList(i));        
+        [o,~,alpha]=imread([objectsDir halfObjectsList(i)], 'jpg');
         StimRect=RectOfMatrix(o);
         StimCell=cat(3,o,alpha);
         img{i,2}=Screen('MakeTexture',window, StimCell);
-        aq.objects(i)=cellstr(objects(i).name);
+        aq.objects(i)=cellstr(halfObjectsList(i));
         DrawFormattedText(window, ['Reading image #', num2str(i)], 'center','center', [0 0 0]); % temporary for coding purposes
         Screen('Flip', window);
     end  
@@ -158,31 +214,6 @@ try
     StimBoxFrame=CenterRectOnPoint([0 0 xPoints/4 xPoints/4]*1.2,cx,cy);
     DrawFormattedText(window, ['Images prepared.'], 'center','center', [0 0 0]);
     Screen('Flip', window);
-
-%% Set Information for Trial Design 
-%(instantiates variables)
-    aq.rewProb=zeros(1,nTrials);
-    aq.prob=.8;
-    x=aq.prob*nTrials;
-    aq.rewProb(1:x)=1;
-    aq.rewProb=aq.rewProb(randperm(numel(aq.rewProb)));
-disp(['# trials is ' num2str(nTrials) 'on line 107']);
-    aq.trialsS=randperm(nTrials); %MS: /2); %creates random order for scenes
-    aq.trialsO=randperm(nTrials); %MS: /2); %a separate random list for objects
-    aq.SorR=ones(1,nTrials); %which category will appear on the left
-    x=nTrials/2;
-    aq.SorR(1:x)=2;
-    aq.SorR=aq.SorR(randperm(numel(aq.SorR))); % Stimuli for stimBox1 on Left (1=scene, 2=object)
-    aq.chosenSide=NaN(1,nTrials);
-    aq.chosenStim=aq.chosenSide;
-    aq.rt=aq.chosenSide;
-    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
-    %aq.reversalAt=10;
-    b=0;
-    aq.blockLength=30; %MS: 40;
-    aq.breaks=NaN(1,nTrials/aq.blockLength-1);
-    aq.breaksLength=aq.breaks;
-    aq.reward=aq.breaks;
 
    %%  Write Instructions and check for escape key
     DrawFormattedText(window,['Which category is more likely to be correct? \n\n Use the ''j'' key for Left \n use the ''k'' key for Right \n\n\n Press SPACE BAR to start'], 'center','center', [0 0 0]);
@@ -229,19 +260,20 @@ escape=0;
             break
         end
         
-        if aq.SorR(t) == 1 % Place scene in stimBox1 on Left
+        if aq.stimOnLeft(t) == 1 % Place scene in stimBox1 on Left
             trials1=aq.trialsS(t); %MS: added aq.
             trials2=aq.trialsO(t);
-        elseif aq.SorR(t) == 2 % Place object in stimBox1 on Left
+        elseif aq.stimOnLeft(t) == 2 % Place object in stimBox1 on Left
             trials1=aq.trialsO(t);
             trials2=aq.trialsS(t);
         end
         %%%% SHOW STIMULI %%%%
-        disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and SorR is' num2str(aq.SorR(t)) ' and size of img' num2str(size(img))])
+        %disp(['t is ' num2str(t) 'and trials1 is ' num2str(trials1) ' and stimOnLeft is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
+        disp(['t is ' num2str(t) ' and stimOnLeft is' num2str(aq.stimOnLeft(t)) ' and size of img' num2str(size(img))])
         
-        Screen('DrawTexture', window, img{trials1,aq.SorR(t)}, [], StimBox1); % render stimuli image in StimBox1 (L); img{i,j} category chosen by SorR and image in list by j
+        Screen('DrawTexture', window, img{t,aq.stimOnLeft(t)}, [], StimBox1); % render stimuli image in StimBox1 (L); img{i,j} category chosen by stimOnLeft and image in list by j
         Screen('FrameRect',window, black, StimBox1, 4);
-        Screen('DrawTexture', window, img{trials2,abs(aq.SorR(t)-3)}, [], StimBox2);
+        Screen('DrawTexture', window, img{t,abs(aq.stimOnLeft(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
         [VBLTimestamp startChoice(t)]=Screen('Flip', window); % displays on screen and starts choice timing    
         
@@ -285,21 +317,21 @@ escape=0;
         aq.keyPressed(t)=resp;
 
         % Add Yellow Frame to Chosen Stimuli
-        Screen('DrawTexture', window, img{trials1,aq.SorR(t)}, [], StimBox1);
+        Screen('DrawTexture', window, img{t,aq.stimOnLeft(t)}, [], StimBox1);
         Screen('FrameRect',window, black, StimBox1, 4);
-        Screen('DrawTexture', window, img{trials2,abs(aq.SorR(t)-3)}, [], StimBox2);
+        Screen('DrawTexture', window, img{t,abs(aq.stimOnLeft(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
 
         if isequal(resp,'j')
             aq.chosenSide(t)=1; % i.e. Left
-            aq.chosenStim(t)=img{trials1,aq.SorR(t)}; 
+            aq.chosenStim(t)=img{t,aq.stimOnLeft(t)}; 
             Screen('FrameRect',window, [255 255 0], StimBox1Frame, 6);
             Screen('Flip', window); % show response
             WaitSecs(.5); %so show the feedback for 0.5sec
             resp=1;
         elseif isequal(resp,'k')
             aq.chosenSide(t)=2; % i.e. Right
-            aq.chosenStim(t)=img{trials2,abs(aq.SorR(t)-3)};
+            aq.chosenStim(t)=img{t,abs(aq.stimOnLeft(t)-3)};
             Screen('FrameRect',window, [255 255 0], StimBox2Frame, 6);
             Screen('Flip', window); % show response
             WaitSecs(.5);
@@ -324,7 +356,7 @@ escape=0;
             aq.optimal(t)=NaN;
             WaitSecs(2);
         elseif aq.rewProb(t)==1
-            if (resp==1 && aq.SorR(t)==rewCat) || (resp==2 && abs(3-aq.SorR(t))==rewCat)
+            if (resp==1 && aq.stimOnLeft(t)==rewCat) || (resp==2 && abs(3-aq.stimOnLeft(t))==rewCat)
 %                 if resp==1
 %                     Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
 %                 elseif resp==2
@@ -356,7 +388,7 @@ escape=0;
                 WaitSecs(1);
             end
         elseif aq.rewProb(t)==0
-           if (resp==1 && aq.SorR(t)==rewCat) || (resp==2 &&  abs(3-aq.SorR(t))==rewCat)
+           if (resp==1 && aq.stimOnLeft(t)==rewCat) || (resp==2 &&  abs(3-aq.stimOnLeft(t))==rewCat)
 %                if resp==1
 %                 Screen('DrawTexture', window, img{trials1,rewCat}, [], StimBox); %%%% 
 %                elseif resp==2
@@ -371,7 +403,7 @@ escape=0;
                 aq.reward(t)=0;
                 aq.optimal(t)=1;
                 WaitSecs(1);
-           elseif (resp==1 && aq.SorR(t)~=rewCat) || (resp==2 &&  abs(3-aq.SorR(t))~=rewCat)
+           elseif (resp==1 && aq.stimOnLeft(t)~=rewCat) || (resp==2 &&  abs(3-aq.stimOnLeft(t))~=rewCat)
 %                 if resp==1
 %                     Screen('DrawTexture', window, img{trials1,abs(3-rewCat)}, [], StimBox); %%%% 
 %                 elseif resp==2
@@ -396,9 +428,13 @@ escape=0;
         outputmat(t,1)=SubjectNumber;
         outputmat(t,2)=t;
         outputmat(t,3)=day;
-        outputmat(t,4)=trials1;
-        outputmat(t,5)=trials2;
-        outputmat(t,6)=aq.SorR(t); %this is image category on Left?
+        %outputmat(t,4)=trials1; eliminated these - now halfScenesList and
+        %halfObjectsList used - have stimuli names in random permutation
+        %for half being used for day
+        %outputmat(t,5)=trials2;
+        outputmat(t,4)=aq.halfScenesList;
+        outputmat(t,5)=aq.halfObjectsList;
+        outputmat(t,6)=aq.stimOnLeft(t); %this is image category on Left?
         outputmat(t,7)=rewCat;
         outputmat(t,8)=resp; %1=left, 2=right
         outputmat(t,9)=aq.rewProb(t);
@@ -415,8 +451,8 @@ escape=0;
         
     %% Save frequently and set blocks
             if mod(t,10)==1
-                save(sprintf('%s/aquisitionAQ',folder_name),'aq');
-                save(sprintf('%s/AQmat',folder_name),'outputmat');
+                save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq');
+                save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
             end
             % below is where we could move the image loading to
             if mod(t,aq.blockLength)==0 && t<nTrials %MS changed block length to 6 for testing
@@ -436,9 +472,9 @@ escape=0;
             end
             
     end % end trial loop
-        save(sprintf('%s/aquisitionAQ',folder_name),'aq')
-        save(sprintf('%s/AQmat',folder_name),'outputmat');
-        save(sprintf('%s/space',folder_name))
+        save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq')
+        save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
+        save(sprintf('%s/day%d/space',folder_name,day))
         escape=1;
  end
  
