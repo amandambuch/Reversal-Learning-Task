@@ -9,7 +9,7 @@
 
 function ReversalTask_MAIN
 % main file that runs sections of task and takes initial input
-direc='../Subjects/'; % enter subject directory here
+dir='../Subjects/'; % enter subject directory here
 
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
@@ -44,9 +44,8 @@ if p.practice==1
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %     'memory' 'stimSet' 'listNum' 'versionRewardCat'
     %pr = ReversalTask_Practice(p.versionRewardCat,p.day);
-    save(sprintf('%s/practicePR',folder_name),'pr')
 end
-
+save(sprintf('%s/practicePR',folder_name),'pr')
 
 [trigger,kb,buttonBox]=getExternals; 
 
@@ -79,11 +78,11 @@ if p.acquisition ==1
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %         'memory' 'stimSet' 'listNum' 'versionRewardCat'
      prob=.8; % move variable to top
-     blockLength=50;
+     blockLength=30;
      nTrials=150; %total number of trials for 1 day
      aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,p.scanned,folder_name, p.SubjectNumber,prob,blockLength,nTrials);
 
 % end
-save(sprintf('%s/aquisitionAQfin',folder_name),'aq')
+save(sprintf('%s/aquisitionAQfin/day%d/',folder_name,p.day),'aq')
     
 end

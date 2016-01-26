@@ -147,7 +147,7 @@ end
     aq.chosenStim=aq.chosenSide;
     aq.rt=aq.chosenSide;
 
-    aq.reversalAt=randi([80 100],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
+    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
     b=0;
     aq.blockLength=blockLength; %now set in main function
     aq.breaks=NaN(1,nTrials/aq.blockLength-1);
@@ -158,15 +158,15 @@ end
     aq.objects=aq.scenes;
     img=cell(numel(aq.halfScenesList),2); % the stimuli converted to a screen texture for presentation later in script
     for i=1:numel(aq.halfScenesList) % now size of objects and scenes arrays are both 1/2 the size
-        [o,~,alpha]=imread([scenesDir aq.halfScenesList(i).name], 'jpg');
+        [o,~,alpha]=imread([scenesDir aq.halfScenesList(i).names], 'jpg');
         StimCell=cat(3,o,alpha);
         img{i,1}=Screen('MakeTexture',window, StimCell);
-        aq.scenes(i)=cellstr(aq.halfScenesList(i).name);        
-        [o,~,alpha]=imread([objectsDir aq.halfObjectsList(i).name], 'jpg');
+        aq.scenes(i)=cellstr(aq.halfScenesList(i));        
+        [o,~,alpha]=imread([objectsDir aq.halfObjectsList(i).names], 'jpg');
         StimRect=RectOfMatrix(o);
         StimCell=cat(3,o,alpha);
         img{i,2}=Screen('MakeTexture',window, StimCell);
-        aq.objects(i)=cellstr(aq.halfObjectsList(i).name);
+        aq.objects(i)=cellstr(aq.halfObjectsList(i));
         DrawFormattedText(window, ['Reading image #', num2str(i)], 'center','center', [0 0 0]); % temporary for coding purposes
         Screen('Flip', window);
     end  
@@ -407,14 +407,14 @@ escape=0;
         %halfObjectsList used - have stimuli names in random permutation
         %for half being used for day
         %outputmat(t,5)=trials2;
-        %outputmat(t,4)=aq.halfScenesList.name;
-        %outputmat(t,5)=aq.halfObjectsList.name;
-        outputmat(t,4)=aq.stimOnLeft(t); %this is image category on Left?
-        outputmat(t,5)=rewCat;
-        outputmat(t,6)=resp; %1=left, 2=right
-        outputmat(t,7)=aq.rewProb(t);
-        outputmat(t,8)=aq.reward(t); %feedback they were acually given
-        outputmat(t,9)=aq.optimal(t);
+        outputmat(t,4)=aq.halfScenesList;
+        outputmat(t,5)=aq.halfObjectsList;
+        outputmat(t,6)=aq.stimOnLeft(t); %this is image category on Left?
+        outputmat(t,7)=rewCat;
+        outputmat(t,8)=resp; %1=left, 2=right
+        outputmat(t,9)=aq.rewProb(t);
+        outputmat(t,10)=aq.reward(t); %feedback they were acually given
+        outputmat(t,11)=aq.optimal(t);
         %MS: i want to also save the number of the images shown on each
         %trial. Not sure which variable best for this. The img variable
         %does not seem to be saving the correct number as the numbers don't
@@ -426,8 +426,8 @@ escape=0;
         
     %% Save frequently and set blocks
             if mod(t,10)==1
-                save(sprintf('%s/day%d/aquisitionAQ',folder_name),'aq');
-                save(sprintf('%s/day%d/AQmat',folder_name),'outputmat');
+                save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq');
+                save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
             end
             % below is where we could move the image loading to
             if mod(t,aq.blockLength)==0 && t<nTrials %MS changed block length to 6 for testing
@@ -447,9 +447,9 @@ escape=0;
             end
             
     end % end trial loop
-        save(sprintf('%s/day%d/aquisitionAQ',folder_name),'aq')
-        save(sprintf('%s/day%d/AQmat',folder_name),'outputmat');
-        save(sprintf('%s/day%d/space',folder_name))
+        save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq')
+        save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
+        save(sprintf('%s/day%d/space',folder_name,day))
         escape=1;
  end
  
