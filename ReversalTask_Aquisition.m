@@ -14,7 +14,7 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials,trigger)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
 
@@ -65,9 +65,14 @@ try
     disp(['Center is ',num2str(cx), ' ',num2str(cy), ' and winsize is ', num2str(xPoints), num2str(yPoints)])
     %pause
     
-        scenesDir='StimuliPD/Aquisition/300Scenes/';
+    scenesDir='StimuliPD/Aquisition/300Scenes/';
     objectsDir='StimuliPD/Aquisition/300Objects/';
+    
+    onsetlist=load('testonsets_1.mat'); % NEED TO FIX THIS
+    onsetlist=onsetlist.onsetlist;
 
+    maxtime=2.5;
+    
 if day == 1 %set and save randomized list    
     %% Locate and Choose the Stimuli
 
@@ -196,8 +201,18 @@ end
     while(1)
         [keyIsDown,TimeStamp,keyCode] = KbCheck;
         if keyCode(okResp) %%allows examiner to press the space bar to pause the task if there is a problem, without terminating
+            if scanned==1
+            DrawFormattedText(window,['Please wait while we start the scan'],'center','center',[0 0 0]);
+            Screen('Flip',window);
+            keysofint=zeros(1,256);
+            keysofint(ttl)=1;
+            KbQueueCreate(trigger,keysofint);
+            KbQueueStart;
+            KbQueueWait;
+            end
             break;
         end
+        
     end
 
 escape=0;
@@ -206,6 +221,10 @@ escape=0;
         break % also provides an escape mechanism to stop the task
     end
     
+ % preparing for first trial  
+%  DrawFormattedText(window,'+','center','center',[0 0 0]);
+%  Screen('Flip',window);
+
     %%
     startTime=datestr(now);
     ExpStart=GetSecs;
@@ -220,7 +239,10 @@ escape=0;
                 ' trials for reversal # ', num2str(reversal)])
         end
         [~, startTrial, KeyCode]=KbCheck;% initialize keys
-        Screen('FillRect', window, white); % Color the entire window grey
+        %Screen('FillRect', window, white); % Color the entire window grey
+        Screen('TextSize',window, [30]);
+        Screen('TextStyle',window,[2]);
+        DrawFormattedText(window,'+','center','center',[0 0 0]);
         Screen('Flip', window);
         
         while (GetSecs-startTrial)<=.5 %checks each loop for held escape key
@@ -250,11 +272,11 @@ escape=0;
         Screen('FrameRect',window, black, StimBox1, 4);
         Screen('DrawTexture', window, img{t,abs(aq.stimOnLeft(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
-        [VBLTimestamp startChoice(t)]=Screen('Flip', window); % displays on screen and starts choice timing    
+        [VBLTimestamp startChoice(t)]=Screen('Flip', window,ExpStart+onsetlist(t)); % displays on screen and starts choice timing    
         
         %% Response
        keyDown=1; %assume first that key is down
-        while (GetSecs - startChoice(t))<=4 %this is checking that key isn't down and must be the same length as the respnse while loop
+        while (GetSecs - startChoice(t))<=maxtime %this is checking that key isn't down and must be the same length as the respnse while loop
             [keyIsDown,RT_Response,keyCode] = KbCheck;
             if isempty(KbName(keyCode))
                 keyDown=0;
@@ -264,7 +286,7 @@ escape=0;
         end
 
         if keyDown==0
-            while (GetSecs - startChoice(t))<=4 %max choice time 
+            while (GetSecs - startChoice(t))<=maxtime %max choice time 
                 [keyIsDown,RT_Response,keyCode] = KbCheck;
                 if keyCode(leftResp)|| keyCode(rightResp) %checks if left or right key was pressed
                     break;
@@ -276,7 +298,8 @@ escape=0;
         end
          disp('line 198')
 
-        aq.rt(t)=(1000*(RT_Response-startChoice(t)));% compute response time in milliseconds
+        aq.rt(t)=RT_Response-startChoice(t);% compute response time in milliseconds
+        
 
         resp=KbName(keyCode); %find name of key that was pressed
         if iscell(resp) %checking if 2 keys were pressed and keeping 2nd
@@ -287,7 +310,7 @@ escape=0;
         end
         if isempty(resp)
             resp=NaN;
-            aq.rt(t)=NaN;
+            aq.rt(t)=maxtime;
         end
         aq.keyPressed(t)=resp;
 
@@ -301,15 +324,15 @@ escape=0;
             aq.chosenSide(t)=1; % i.e. Left
             aq.chosenStim(t)=img{t,aq.stimOnLeft(t)}; 
             Screen('FrameRect',window, [255 255 0], StimBox1Frame, 6);
-            Screen('Flip', window); % show response
-            WaitSecs(.5); %so show the feedback for 0.5sec
+            Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)); % show response
+            %WaitSecs(.5); %so show the feedback for 0.5sec
             resp=1;
         elseif isequal(resp,'k')
             aq.chosenSide(t)=2; % i.e. Right
             aq.chosenStim(t)=img{t,abs(aq.stimOnLeft(t)-3)};
             Screen('FrameRect',window, [255 255 0], StimBox2Frame, 6);
-            Screen('Flip', window); % show response
-            WaitSecs(.5);
+            Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)); % show response
+            %WaitSecs(.5);
             resp=2;
         else
             aq.chosenSide(t)=NaN;
@@ -326,10 +349,10 @@ escape=0;
             [nx, ny,TB]=DrawFormattedText(window,' Too Slow! ', 'center','center', [0 0 0]);
             Screen('FillRect', window, white, [TB(1)+2 TB(2)+3 TB(3)+2 TB(4)+3]);
             DrawFormattedText(window,' Too Slow! ', 'center','center', [0 0 0]);
-            [VBLTimestamp startFB(t)]=Screen('Flip', window);
+            [VBLTimestamp startFB(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)); %in this case aq.rt is the Maxtime
             aq.reward(t)=NaN;
             aq.optimal(t)=NaN;
-            WaitSecs(2);
+            %WaitSecs(.5);
         elseif aq.rewProb(t)==1
             if (resp==1 && aq.stimOnLeft(t)==rewCat) || (resp==2 && abs(3-aq.stimOnLeft(t))==rewCat)
 %                 if resp==1
@@ -340,9 +363,13 @@ escape=0;
 %                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5);%put up crosshair after yellow frame is up for 0.5sec
+                
                 DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5);%put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=1;
                 aq.optimal(t)=1;
                 WaitSecs(1);
@@ -355,9 +382,13 @@ escape=0;
 %                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5);%put up crosshair after yellow frame is up for 0.5sec
+                
                 DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
                 %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5);%put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=0;
                 aq.optimal(t)=0;
                 WaitSecs(1);
@@ -372,9 +403,13 @@ escape=0;
 %                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5); %put up crosshair after yellow frame is up for 0.5sec
+                
                 DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
                 %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5);%put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=0;
                 aq.optimal(t)=1;
                 WaitSecs(1);
@@ -387,15 +422,21 @@ escape=0;
 %                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5);
+                
                 DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5); %put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=1;
                 aq.optimal(t)=0;
                 WaitSecs(1);
            end
-        end    
-        [VBLTimestamp FBOffTime(t)]=Screen('Flip', window);    % remove feedback               
+        end
+        
+        DrawFormattedText(window,'+','center','center',[0 0 0]);
+        [VBLTimestamp FBOffTime(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+2.5);    % remove feedback after 1sec (ie 2sec since
     
         
     %% MS: create an output matrix
@@ -435,15 +476,25 @@ escape=0;
                 aq.breaks(b)=GetSecs;
                 Screen('TextSize',window, [30]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Please take a break for as long as you need. \n\n Press the SPACE BAR when you are ready to start again.', 'center','center', [0 0 0]);
-                Screen('Flip', window)             
+                DrawFormattedText(window,'Please take a break for as long as you need. \n\n Press the SPACE BAR when you are ready to start again.', 'center','center', [0 0 0]);            
+                Screen('Flip',window);
                 while(1)
                     [keyIsDown,TimeStamp,keyCode] = KbCheck;
                     if keyCode(okResp) %end the break when spacebar is pressed
+                        if scanned==1
+                            DrawFormattedText(window,['Please wait while we re-boot the scanner'],'center','center',[0 0 0]);
+                            Screen('Flip',window);
+                            keysofint=zeros(1,256);
+                            keysofint(ttl)=1;
+                            KbQueueCreate(trigger,keysofint);
+                            KbQueueStart;
+                            KbQueueWait;
+                        end
                         break;
                     end
                 end
                 aq.breaksLength(b)=GetSecs-aq.breaks(b);
+                ExpStart=ExpStart+aq.breaksLength(b);
             end
             
     end % end trial loop
