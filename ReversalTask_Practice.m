@@ -132,7 +132,7 @@ disp(['# trials is ' num2str(nTrials) 'on line 88']);
     pr.chosenSide=NaN(1,numel(nTrials));
     pr.chosenStim=pr.chosenSide;
     pr.rt=pr.chosenSide;
-    pr.reversalAt=8;
+    pr.reversalAt=6;
 %     trials1=NaN(1,nTrials);
 %     trials2=trials1;
 %%  Write Instructions and check for escape key

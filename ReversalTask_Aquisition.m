@@ -14,40 +14,9 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials,trigger)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
-% %% just for troubleshooting purposes, not running as function so I can see the variables in workspace
-% 
-% direc='../Subjects/'; % enter subject directory here
-% 
-% KbName('UnifyKeyNames');
-% rand('state',sum(100*clock));
-% okResp=KbName('space'); 
-% 
-% p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
-%     SubjectNumber=p.SubjectNumber;
-% p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
-%     day=p.day; %MS since not running out of wrapper
-% 
-% folder_name=(sprintf('Subjects/Subject%d/day%d',p.SubjectNumber,p.day));
-% if ~exist(folder_name, 'dir')
-%     mkdir (sprintf('%s',folder_name))
-% else
-%     disp(['Error directory exists for subject ' num2str(p.SubjectNumber) ' for day ' num2str(p.day)])
-%     return
-% end
-% 
-% p.practice=input('Are you doing the Practice?: (1=yes, 2=no) ');
-% p.acquisition=input('Are you doing the Acquisition?: (1=yes, 2=no) ');
-% p.versionRewardCat=input('Which stim set (1 or 2)?: '); %1=scenes 1st rewarded, 2=objects first rewarded
-%     rewCat=p.versionRewardCat;
-% p.scanned=input('Is this an fMRI experiment (1 or 2)?: (1=yes, 2=no)');
-%     scanned=p.scanned;
-% 
-% 
-% save (sprintf('%s/inputP',folder_name), 'p')
-%%
 
 % aq is the structure that contains all the matrices to be saved
 % disp('line here') are tempory for troubleshooting purposes
@@ -96,9 +65,14 @@ try
     disp(['Center is ',num2str(cx), ' ',num2str(cy), ' and winsize is ', num2str(xPoints), num2str(yPoints)])
     %pause
     
-        scenesDir='StimuliPD/Aquisition/300Scenes/';
+    scenesDir='StimuliPD/Aquisition/300Scenes/';
     objectsDir='StimuliPD/Aquisition/300Objects/';
+    
+    onsetlist=load('testonsets_1.mat'); % NEED TO FIX THIS
+    onsetlist=onsetlist.onsetlist;
 
+    maxtime=2.5;
+    
 if day == 1 %set and save randomized list    
     %% Locate and Choose the Stimuli
 
@@ -131,16 +105,20 @@ if day == 1 %set and save randomized list
     
     %% choose second half to load
     aq.scenesList= scenes(nS);  % apply random order to file name list
+    scenesList=aq.scenesList; %had to duplicate because 'save' doesn't accept structure
     tempS=aq.scenesList;
     aq.objectsList= scenes(nO);
+    objectsList=aq.objectsList;
     tempO=aq.objectsList;
     
     aq.halfScenesList=scenes(1:(floor(numel(tempS)/2))); % choose only half to be presented per day
     aq.halfObjectsList=objects(1:(floor(numel(tempO)/2)));
+    halfScenesList=aq.halfScenesList; %duplicate save for use later
+    halfObjectsList=aq.halfObjectsList;
     
     
-    save(sprintf('%s/scenesList',folder_name),'aq.scenesList'); % save total randomized directory list to load later
-    save(sprintf('%s/objectsList',folder_name),'aq.objectsList');
+    save(sprintf('%s/scenesList',folder_name),'scenesList'); % save total randomized directory list to load later
+    save(sprintf('%s/objectsList',folder_name),'objectsList');
     %save(sprintf('%s/trialsS',folder_name),'aq.trialsS');    
     %save(sprintf('%s/trialsO',folder_name),'aq.trialsO');    
     
@@ -165,33 +143,35 @@ elseif day == 2  % load randomized lists for reward proability, scenes/objects o
     tempS=aq.scenesList;
 	tempO=aq.objectsList;
     aq.halfScenesList=tempS((round(numel(tempS)/2))):round(numel(tempS));
+    halfScenesList=aq.halfScenesList; %duplicating save for use later
     aq.halfObjectsList=tempO((round(numel(tempO)/2))):round(numel(tempO));
+    halfObjectsList=aq.halfObjectsList;
 end
 
     aq.chosenSide=NaN(1,nTrials);%creates null matrix that will be populated by participant choices
     aq.chosenStim=aq.chosenSide;
     aq.rt=aq.chosenSide;
 
-    aq.reversalAt=randi([10 15],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
+    aq.reversalAt=randi([80 100],1,1); % sets reversal at random value between 80 and 100, want to avoid block transition
     b=0;
     aq.blockLength=blockLength; %now set in main function
     aq.breaks=NaN(1,nTrials/aq.blockLength-1);
     aq.breaksLength=aq.breaks;
     aq.reward=aq.breaks;
     
-    aq.scenes=cell(numel(halfScenesList),1);
+    aq.scenes=cell(numel(aq.halfScenesList),1);
     aq.objects=aq.scenes;
-    img=cell(numel(halfScenesList),2); % the stimuli converted to a screen texture for presentation later in script
-    for i=1:numel(halfScenesList) % now size of objects and scenes arrays are both 1/2 the size
-        [o,~,alpha]=imread([scenesDir halfScenesList(i)], 'jpg');
+    img=cell(numel(aq.halfScenesList),2); % the stimuli converted to a screen texture for presentation later in script
+    for i=1:numel(aq.halfScenesList) % now size of objects and scenes arrays are both 1/2 the size
+        [o,~,alpha]=imread([scenesDir aq.halfScenesList(i).name], 'jpg');
         StimCell=cat(3,o,alpha);
         img{i,1}=Screen('MakeTexture',window, StimCell);
-        aq.scenes(i)=cellstr(halfScenesList(i));        
-        [o,~,alpha]=imread([objectsDir halfObjectsList(i)], 'jpg');
+        aq.scenes(i)=cellstr(aq.halfScenesList(i).name);        
+        [o,~,alpha]=imread([objectsDir aq.halfObjectsList(i).name], 'jpg');
         StimRect=RectOfMatrix(o);
         StimCell=cat(3,o,alpha);
         img{i,2}=Screen('MakeTexture',window, StimCell);
-        aq.objects(i)=cellstr(halfObjectsList(i));
+        aq.objects(i)=cellstr(aq.halfObjectsList(i).name);
         DrawFormattedText(window, ['Reading image #', num2str(i)], 'center','center', [0 0 0]); % temporary for coding purposes
         Screen('Flip', window);
     end  
@@ -221,8 +201,18 @@ end
     while(1)
         [keyIsDown,TimeStamp,keyCode] = KbCheck;
         if keyCode(okResp) %%allows examiner to press the space bar to pause the task if there is a problem, without terminating
+            if scanned==1
+            DrawFormattedText(window,['Please wait while we start the scan'],'center','center',[0 0 0]);
+            Screen('Flip',window);
+            keysofint=zeros(1,256);
+            keysofint(ttl)=1;
+            KbQueueCreate(trigger,keysofint);
+            KbQueueStart;
+            KbQueueWait;
+            end
             break;
         end
+        
     end
 
 escape=0;
@@ -231,6 +221,10 @@ escape=0;
         break % also provides an escape mechanism to stop the task
     end
     
+ % preparing for first trial  
+%  DrawFormattedText(window,'+','center','center',[0 0 0]);
+%  Screen('Flip',window);
+
     %%
     startTime=datestr(now);
     ExpStart=GetSecs;
@@ -245,7 +239,10 @@ escape=0;
                 ' trials for reversal # ', num2str(reversal)])
         end
         [~, startTrial, KeyCode]=KbCheck;% initialize keys
-        Screen('FillRect', window, white); % Color the entire window grey
+        %Screen('FillRect', window, white); % Color the entire window grey
+        Screen('TextSize',window, [30]);
+        Screen('TextStyle',window,[2]);
+        DrawFormattedText(window,'+','center','center',[0 0 0]);
         Screen('Flip', window);
         
         while (GetSecs-startTrial)<=.5 %checks each loop for held escape key
@@ -275,11 +272,11 @@ escape=0;
         Screen('FrameRect',window, black, StimBox1, 4);
         Screen('DrawTexture', window, img{t,abs(aq.stimOnLeft(t)-3)}, [], StimBox2);
         Screen('FrameRect',window, black, StimBox2, 4);  
-        [VBLTimestamp startChoice(t)]=Screen('Flip', window); % displays on screen and starts choice timing    
+        [VBLTimestamp startChoice(t)]=Screen('Flip', window,ExpStart+onsetlist(t)); % displays on screen and starts choice timing    
         
         %% Response
        keyDown=1; %assume first that key is down
-        while (GetSecs - startChoice(t))<=4 %this is checking that key isn't down and must be the same length as the respnse while loop
+        while (GetSecs - startChoice(t))<=maxtime %this is checking that key isn't down and must be the same length as the respnse while loop
             [keyIsDown,RT_Response,keyCode] = KbCheck;
             if isempty(KbName(keyCode))
                 keyDown=0;
@@ -289,7 +286,7 @@ escape=0;
         end
 
         if keyDown==0
-            while (GetSecs - startChoice(t))<=4 %max choice time 
+            while (GetSecs - startChoice(t))<=maxtime %max choice time 
                 [keyIsDown,RT_Response,keyCode] = KbCheck;
                 if keyCode(leftResp)|| keyCode(rightResp) %checks if left or right key was pressed
                     break;
@@ -301,7 +298,8 @@ escape=0;
         end
          disp('line 198')
 
-        aq.rt(t)=(1000*(RT_Response-startChoice(t)));% compute response time in milliseconds
+        aq.rt(t)=RT_Response-startChoice(t);% compute response time in milliseconds
+        
 
         resp=KbName(keyCode); %find name of key that was pressed
         if iscell(resp) %checking if 2 keys were pressed and keeping 2nd
@@ -312,7 +310,7 @@ escape=0;
         end
         if isempty(resp)
             resp=NaN;
-            aq.rt(t)=NaN;
+            aq.rt(t)=maxtime;
         end
         aq.keyPressed(t)=resp;
 
@@ -326,15 +324,15 @@ escape=0;
             aq.chosenSide(t)=1; % i.e. Left
             aq.chosenStim(t)=img{t,aq.stimOnLeft(t)}; 
             Screen('FrameRect',window, [255 255 0], StimBox1Frame, 6);
-            Screen('Flip', window); % show response
-            WaitSecs(.5); %so show the feedback for 0.5sec
+            Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)); % show response
+            %WaitSecs(.5); %so show the feedback for 0.5sec
             resp=1;
         elseif isequal(resp,'k')
             aq.chosenSide(t)=2; % i.e. Right
             aq.chosenStim(t)=img{t,abs(aq.stimOnLeft(t)-3)};
             Screen('FrameRect',window, [255 255 0], StimBox2Frame, 6);
-            Screen('Flip', window); % show response
-            WaitSecs(.5);
+            Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)); % show response
+            %WaitSecs(.5);
             resp=2;
         else
             aq.chosenSide(t)=NaN;
@@ -351,10 +349,10 @@ escape=0;
             [nx, ny,TB]=DrawFormattedText(window,' Too Slow! ', 'center','center', [0 0 0]);
             Screen('FillRect', window, white, [TB(1)+2 TB(2)+3 TB(3)+2 TB(4)+3]);
             DrawFormattedText(window,' Too Slow! ', 'center','center', [0 0 0]);
-            [VBLTimestamp startFB(t)]=Screen('Flip', window);
+            [VBLTimestamp startFB(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)); %in this case aq.rt is the Maxtime
             aq.reward(t)=NaN;
             aq.optimal(t)=NaN;
-            WaitSecs(2);
+            %WaitSecs(.5);
         elseif aq.rewProb(t)==1
             if (resp==1 && aq.stimOnLeft(t)==rewCat) || (resp==2 && abs(3-aq.stimOnLeft(t))==rewCat)
 %                 if resp==1
@@ -365,9 +363,13 @@ escape=0;
 %                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5);%put up crosshair after yellow frame is up for 0.5sec
+                
                 DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5);%put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=1;
                 aq.optimal(t)=1;
                 WaitSecs(1);
@@ -380,9 +382,13 @@ escape=0;
 %                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5);%put up crosshair after yellow frame is up for 0.5sec
+                
                 DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
                 %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5);%put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=0;
                 aq.optimal(t)=0;
                 WaitSecs(1);
@@ -397,9 +403,13 @@ escape=0;
 %                 Screen('FrameRect',window, [255 0 0], StimBoxFrame, 6); %make frame red               
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5); %put up crosshair after yellow frame is up for 0.5sec
+                
                 DrawFormattedText(window,'Wrong!!', 'center','center', [255 0 0]);
                 %DrawFormattedText(window,'Wrong!!', 'center',cy-400, [255 0 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5);%put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=0;
                 aq.optimal(t)=1;
                 WaitSecs(1);
@@ -412,15 +422,21 @@ escape=0;
 %                 Screen('FrameRect',window, [0 255 0], StimBoxFrame, 6); %make frame green
                 Screen('TextSize',window, [50]);
                 Screen('TextStyle',window,[2]);
+                
+                DrawFormattedText(window,'+','center','center',[0 0 0]);
+                Screen('Flip',window, ExpStart+onsetlist(t)+aq.rt(t)+0.5);
+                
                 DrawFormattedText(window,'You won!!', 'center','center', [0 255 0]);
                 %DrawFormattedText(window,'You won!!', 'center',cy-400, [0 255 0]);
-                [VBLTimestamp startFB2(t)]=Screen('Flip', window);
+                [VBLTimestamp startFB2(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+1.5); %put up FB after the crosshair has been on for 1sec
                 aq.reward(t)=1;
                 aq.optimal(t)=0;
                 WaitSecs(1);
            end
-        end    
-        [VBLTimestamp FBOffTime(t)]=Screen('Flip', window);    % remove feedback               
+        end
+        
+        DrawFormattedText(window,'+','center','center',[0 0 0]);
+        [VBLTimestamp FBOffTime(t)]=Screen('Flip', window, ExpStart+onsetlist(t)+aq.rt(t)+2.5);    % remove feedback after 1sec (ie 2sec since
     
         
     %% MS: create an output matrix
@@ -432,14 +448,14 @@ escape=0;
         %halfObjectsList used - have stimuli names in random permutation
         %for half being used for day
         %outputmat(t,5)=trials2;
-        outputmat(t,4)=aq.halfScenesList;
-        outputmat(t,5)=aq.halfObjectsList;
-        outputmat(t,6)=aq.stimOnLeft(t); %this is image category on Left?
-        outputmat(t,7)=rewCat;
-        outputmat(t,8)=resp; %1=left, 2=right
-        outputmat(t,9)=aq.rewProb(t);
-        outputmat(t,10)=aq.reward(t); %feedback they were acually given
-        outputmat(t,11)=aq.optimal(t);
+        %outputmat(t,4)=aq.halfScenesList.name;
+        %outputmat(t,5)=aq.halfObjectsList.name;
+        outputmat(t,4)=aq.stimOnLeft(t); %this is image category on Left?
+        outputmat(t,5)=rewCat;
+        outputmat(t,6)=resp; %1=left, 2=right
+        outputmat(t,7)=aq.rewProb(t);
+        outputmat(t,8)=aq.reward(t); %feedback they were acually given
+        outputmat(t,9)=aq.optimal(t);
         %MS: i want to also save the number of the images shown on each
         %trial. Not sure which variable best for this. The img variable
         %does not seem to be saving the correct number as the numbers don't
@@ -451,8 +467,8 @@ escape=0;
         
     %% Save frequently and set blocks
             if mod(t,10)==1
-                save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq');
-                save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
+                save(sprintf('%s/day%d/aquisitionAQ',folder_name),'aq');
+                save(sprintf('%s/day%d/AQmat',folder_name),'outputmat');
             end
             % below is where we could move the image loading to
             if mod(t,aq.blockLength)==0 && t<nTrials %MS changed block length to 6 for testing
@@ -460,21 +476,31 @@ escape=0;
                 aq.breaks(b)=GetSecs;
                 Screen('TextSize',window, [30]);
                 Screen('TextStyle',window,[2]);
-                DrawFormattedText(window,'Please take a break for as long as you need. \n\n Press the SPACE BAR when you are ready to start again.', 'center','center', [0 0 0]);
-                Screen('Flip', window)             
+                DrawFormattedText(window,'Please take a break for as long as you need. \n\n Press the SPACE BAR when you are ready to start again.', 'center','center', [0 0 0]);            
+                Screen('Flip',window);
                 while(1)
                     [keyIsDown,TimeStamp,keyCode] = KbCheck;
                     if keyCode(okResp) %end the break when spacebar is pressed
+                        if scanned==1
+                            DrawFormattedText(window,['Please wait while we re-boot the scanner'],'center','center',[0 0 0]);
+                            Screen('Flip',window);
+                            keysofint=zeros(1,256);
+                            keysofint(ttl)=1;
+                            KbQueueCreate(trigger,keysofint);
+                            KbQueueStart;
+                            KbQueueWait;
+                        end
                         break;
                     end
                 end
                 aq.breaksLength(b)=GetSecs-aq.breaks(b);
+                ExpStart=ExpStart+aq.breaksLength(b);
             end
             
     end % end trial loop
-        save(sprintf('%s/day%d/aquisitionAQ',folder_name,day),'aq')
-        save(sprintf('%s/day%d/AQmat',folder_name,day),'outputmat');
-        save(sprintf('%s/day%d/space',folder_name,day))
+        save(sprintf('%s/day%d/aquisitionAQ',folder_name),'aq')
+        save(sprintf('%s/day%d/AQmat',folder_name),'outputmat');
+        save(sprintf('%s/day%d/space',folder_name))
         escape=1;
  end
  
