@@ -9,7 +9,7 @@
 
 function ReversalTask_MAIN
 % main file that runs sections of task and takes initial input
-dir='../Subjects/'; % enter subject directory here
+direc='../Subjects/'; % enter subject directory here
 
 KbName('UnifyKeyNames');
 rand('state',sum(100*clock));
@@ -18,7 +18,7 @@ okResp=KbName('space');
 p.SubjectNumber=input('Input Subject Number (e.g. 1, or 12 -- no leading zeros necessary):  ' );
 p.day=input('Which day (1 or 2)?: '); %1st half list for 1st day; 2nd half list for 2nd day
 
-folder_name=(sprintf('Subjects/Subject%d/day%d',p.SubjectNumber,day));
+folder_name=(sprintf('Subjects/Subject%d/day%d',p.SubjectNumber,p.day));
 if ~exist(folder_name, 'dir')
     mkdir (sprintf('%s',folder_name))
 else
@@ -37,15 +37,16 @@ if p.versionRewardCat~= 1 && p.versionRewardCat~=2
     disp('Invalid input!')
     return
 end
-save (sprintf('%s/inputP/day%d/',folder_name,p.day), 'p')
+save (sprintf('%s/inputP',folder_name), 'p')
 
 if p.practice==1
     pr=ReversalTask_PracticeInstructions(p.versionRewardCat, p.day);
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %     'memory' 'stimSet' 'listNum' 'versionRewardCat'
     %pr = ReversalTask_Practice(p.versionRewardCat,p.day);
+    save(sprintf('%s/practicePR',folder_name),'pr')
 end
-save(sprintf('%s/practicePR/day%d/',folder_name,p.day),'pr')
+
 
 [trigger,kb,buttonBox]=getExternals; 
 
@@ -78,11 +79,11 @@ if p.acquisition ==1
 %     clearvars -except 'SubjectNumber' 'okResp' 'practice' 'acquisition' 'performance' ...
 %         'memory' 'stimSet' 'listNum' 'versionRewardCat'
      prob=.8; % move variable to top
-     blockLength=30;
+     blockLength=50;
      nTrials=150; %total number of trials for 1 day
-     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,p.scanned,folder_name, p.SubjectNumber,prob,blockLength,nTrials);
+     aq = ReversalTask_Aquisition(p.versionRewardCat,p.day,p.scanned,folder_name, p.SubjectNumber,prob,blockLength,nTrials,trigger);
 
 % end
-save(sprintf('%s/aquisitionAQfin/day%d/',folder_name,p.day),'aq')
+save(sprintf('%s/aquisitionAQfin',folder_name),'aq')
     
 end
