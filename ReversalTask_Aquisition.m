@@ -14,7 +14,7 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials,trigger)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials,trigger,buttonBox)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
 
