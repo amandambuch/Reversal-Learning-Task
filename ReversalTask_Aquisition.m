@@ -276,33 +276,34 @@ escape=0;
         
         %% Response
        allowKeys=[leftResp rightResp];
+       endTime=startChoice(t)+maxtime;
+       
+       if 0
        keyDown=1; %assume first that key is down
-        while (GetSecs - startChoice(t))<=maxtime %this is checking that key isn't down and must be the same length as the respnse while loop
-            [keyIsDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,maxtime)
+       
+       %this is checking that key isnt down and must be the same length as the respnse while loop
+            [keyDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,endTime)
             if isempty(KbName(keyCode))
                 keyDown=0;
                 break;
             end
-            WaitSecs(.001) %do this loop or the first msec to make sure that key isn't held down
+            WaitSecs(.001) %do this loop or the first msec to make sure that key isnt held down
         end
 
-        if keyDown==0
-            while (GetSecs - startChoice(t))<=maxtime %max choice time 
-                [keyIsDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,maxtime)
-                if keyCode(leftResp)|| keyCode(rightResp) %checks if left or right key was pressed
+            
+                [keyDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,endTime);
+                if KbName(keyCode)==leftResp|| KbName(keyCode)==rightResp %checks if left or right key was pressed
                     break;
                 end
                 WaitSecs(.001);
-            end                
-        else
-            keyCode=zeros(size(keyCode));
-        end
+                           
+       
          disp('line 198')
 
         aq.rt(t)=RT_Response-startChoice(t);% compute response time in milliseconds
         
 
-        resp=KbName(keyCode); %find name of key that was pressed
+        resp=keyCode; %find name of key that was pressed **however KbQ_Func now takes care of this, we think
         if iscell(resp) %checking if 2 keys were pressed and keeping 2nd
             resp=resp{2};
         end

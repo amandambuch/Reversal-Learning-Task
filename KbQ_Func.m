@@ -22,15 +22,19 @@ end
 KbQueueCreate(device,allowKeyCodes);KbQueueStart();
 keyIsDown=0;
 while keyIsDown==0 && GetSecs<endTime
+	%first press contains key identity and RT
     [keyIsDown, firstPress]=KbQueueCheck();
 end
-  
+ 
+%indices of firstPress refer to key code
 keyInd=find(firstPress>0);
 if sum(firstPress>0)>1 %if two keys pressed at once, take first
     keyInd=keyInd(1);  
 end
 
 keyCode=KbName(keyInd);
+
+%values in firstPress refer to reaction times for each key
 RT_Response=firstPress(keyInd);
 
 
