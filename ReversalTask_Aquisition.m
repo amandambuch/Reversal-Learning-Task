@@ -14,7 +14,7 @@
 %beginning
 %deleted save crashwork-maybe only causing me problems because not running as function
 
-function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials,trigger)
+function aq=ReversalTask_Aquisition(rewCat, day, scanned, folder_name, SubjectNumber,prob,blockLength, nTrials,trigger,buttonBox)
 Screen('Preference','SkipSyncTests',1); % change this to 0 when actually running, skips sync tests for troubleshooting purposes
 
 
@@ -275,9 +275,10 @@ escape=0;
         [VBLTimestamp startChoice(t)]=Screen('Flip', window,ExpStart+onsetlist(t)); % displays on screen and starts choice timing    
         
         %% Response
+       allowKeys=[leftResp rightResp];
        keyDown=1; %assume first that key is down
         while (GetSecs - startChoice(t))<=maxtime %this is checking that key isn't down and must be the same length as the respnse while loop
-            [keyIsDown,RT_Response,keyCode] = KbCheck;
+            [keyIsDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,maxtime)
             if isempty(KbName(keyCode))
                 keyDown=0;
                 break;
@@ -287,7 +288,7 @@ escape=0;
 
         if keyDown==0
             while (GetSecs - startChoice(t))<=maxtime %max choice time 
-                [keyIsDown,RT_Response,keyCode] = KbCheck;
+                [keyIsDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,maxtime)
                 if keyCode(leftResp)|| keyCode(rightResp) %checks if left or right key was pressed
                     break;
                 end

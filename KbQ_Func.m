@@ -1,4 +1,4 @@
-function [buttonPress,pressTime] = KbQ_Func(device,allowKeys,endTime)
+function [keyIsDown,RT_Response,keyCode] = KbQ_Func(device,allowKeys,endTime)
 
 % allowKeys is a vector of allowable input - set to 0 if all keys are
 % allowed
@@ -30,8 +30,9 @@ if sum(firstPress>0)>1 %if two keys pressed at once, take first
     keyInd=keyInd(1);  
 end
 
-buttonPress=KbName(keyInd);
-pressTime=firstPress(keyInd);
+keyCode=KbName(keyInd);
+RT_Response=firstPress(keyInd);
+
 
 KbQueueRelease()  % clear KbQueue
 end
