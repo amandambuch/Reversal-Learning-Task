@@ -240,7 +240,7 @@ escape=0;
         end
         [~, startTrial, KeyCode]=KbCheck;% initialize keys
         %Screen('FillRect', window, white); % Color the entire window grey
-        Screen('TextSize',window, [30]);
+        Screen('TextSize',window, [50]);
         Screen('TextStyle',window,[2]);
         DrawFormattedText(window,'+','center','center',[0 0 0]);
         Screen('Flip', window);
@@ -288,14 +288,14 @@ escape=0;
                 break;
             end
             WaitSecs(.001) %do this loop or the first msec to make sure that key isnt held down
-        end
+       end
 
             
-                [keyDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,endTime);
-                if KbName(keyCode)==leftResp|| KbName(keyCode)==rightResp %checks if left or right key was pressed
-                    break;
-                end
-                WaitSecs(.001);
+        [keyDown,RT_Response,keyCode] = KbQ_Func(buttonBox,allowKeys,endTime);
+%         if KbName(keyCode)==leftResp|| KbName(keyCode)==rightResp %checks if left or right key was pressed
+%                     break;
+%         end
+        WaitSecs(.001);
                            
        
          disp('line 198')
